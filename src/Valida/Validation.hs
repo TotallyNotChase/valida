@@ -9,7 +9,7 @@ data Validation e a
   -- | Represents a successful validation with the validated value.
   | Success a
 
-instance Semigroup e => Functor (Validation e) where
+instance Functor (Validation e) where
     fmap _ (Failure e) = Failure e
     fmap f (Success a) = Success $ f a
 

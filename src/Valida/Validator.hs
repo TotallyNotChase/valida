@@ -1,12 +1,9 @@
 module Valida.Validator
     ( Selector
     , Validator (..)
-    , buildValidator
-    , (-?-)
     ) where
 
 import Valida.Validation     (Validation (..))
-import Valida.ValidationRule (ValidationRule (..))
 
 -- | Convenience alias for functions that "select" a record field.
 type Selector a b = a -> b
@@ -54,13 +51,3 @@ instance Semigroup e => Applicative (Validator e inp) where
     @
     -}
     (Validator ff) <*> (Validator v) = Validator $ (<*>) <$> ff <*> v
-
--- | Build a validator from a 'ValidationRule' and a 'Selector'.
-buildValidator :: ValidationRule e b -> Selector a b -> Validator e a b
-buildValidator (ValidationRule rule) selector = Validator $ rule . selector
-
--- | A synonym for 'buildValidator' with its arguments flipped.
-infix 5 -?-
-
-(-?-) :: Selector a b -> ValidationRule e b -> Validator e a b
-(-?-) = flip buildValidator

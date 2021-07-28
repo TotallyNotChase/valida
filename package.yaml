@@ -32,6 +32,7 @@ library:
   source-dirs: src
   exposed-modules:
   - Valida
+  - Valida.Combinators
   ghc-options:
   - -O3
 

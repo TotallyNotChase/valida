@@ -29,6 +29,7 @@ library
   exposed-modules:
       Valida
   other-modules:
+      Valida.Combinators
       Valida.Utils
       Valida.Validation
       Valida.ValidationRule

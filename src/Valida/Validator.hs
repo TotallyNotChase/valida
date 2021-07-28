@@ -26,7 +26,7 @@ the given value wrapped in 'Success'.
 -}
 newtype Validator e inp a = Validator { validate :: inp -> Validation e a }
 
-instance Semigroup e => Functor (Validator e inp) where
+instance Functor (Validator e inp) where
     -- | Run the validator function, and __fmap__ given function over the result.
     fmap f (Validator v) = Validator $ (f <$>) . v
 

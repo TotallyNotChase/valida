@@ -12,14 +12,15 @@ import Data.List.NonEmpty (NonEmpty)
 
 import Valida.Utils (singleton)
 
-{- | The rule a 'Validator' uses to run validation.
+{- | The rule a Validator uses to run validation.
 
 Contains 2 functions-
-* The predicate: Accepts the target type and returns `Bool` indicating validity.
-* The error type generator: Accepts the target type and returns a type that can represent error.
 
-The type- `ValidationRule (NonEmpty String) Int`, designates a rule that verifies the validity of an `Int`, and
-uses a value of type `NonEmpty String` to represent error, in case of failure.
+  * The predicate: Accepts the target type and returns __Bool__ indicating validity.
+  * The error type generator: Accepts the target type and returns a type that can represent error.
+
+The type- __ValidationRule (NonEmpty String) Int__, designates a rule that verifies the validity of an __Int__, and
+uses a value of type __NonEmpty String__ to represent error, in case of failure.
 -}
 data ValidationRule e a
   -- | Builds a 'ValidationRule' from a function to generate error and a validation predicate.
@@ -41,7 +42,7 @@ failureIf' = ValidationRule (const ()) . (not .)
 failureUnless :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
 failureUnless predicate err = ValidationRule (const $ singleton err) predicate
 
--- | Like 'failureUnless' but uses 'Data.Unit' as the 'ValidationRule' error type.
+-- | Like 'failureUnless' but uses /Unit/ as the 'ValidationRule' error type.
 failureUnless' :: (a -> Bool) -> ValidationRule () a
 failureUnless' = ValidationRule (const ())
 

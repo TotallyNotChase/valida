@@ -4,7 +4,11 @@ module Valida.Validation
     ) where
 
 -- | Like 'Either', but accumulates failures upon applicative composition.
-data Validation e a = Failure e | Success a
+data Validation e a
+  -- | Represents a validation failure with an error.
+  = Failure e
+  -- | Represents a successful validation with the validated value.
+  | Success a
 
 instance Semigroup e => Functor (Validation e) where
     fmap _ (Failure e) = Failure e
@@ -19,9 +23,10 @@ instance Semigroup e => Applicative (Validation e) where
 
 {- | Convert a 'Validation' to an 'Either'.
 
-Given, `Validation a b`-
-* `Failure a` is converted to `Left a`.
-* `Success b` is converted to `Right b`.
+Given, __Validation a b__-
+
+  * __Failure a__ is converted to __Left a__.
+  * __Success b__ is converted to __Right b__.
 -}
 toEither :: Validation a b -> Either a b
 toEither (Failure e) = Left e

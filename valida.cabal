@@ -52,5 +52,7 @@ test-suite valida-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-uni-patterns -Wmissed-specialisations -Wmissing-export-lists -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , happy
+    , smallcheck
     , valida
   default-language: Haskell2010

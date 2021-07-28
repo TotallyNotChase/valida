@@ -1,0 +1,45 @@
+name:                valida
+version:             0.1.0
+github:              "TotallyNotChase/valida"
+license:             MIT
+author:              "Chase"
+maintainer:          "totallynotchase42@gmail.com"
+copyright:           "TotallyNotChase"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+synopsis:            Simple, applicative input validation combinators.
+category:            Validation, Data
+
+description:         Please see the README on GitHub at <https://github.com/TotallyNotChase/valida#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-uni-patterns
+- -Wmissed-specialisations
+- -Wmissing-export-lists
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -O3
+
+tests:
+  valida-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - valida

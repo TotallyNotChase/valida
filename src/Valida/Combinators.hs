@@ -29,7 +29,14 @@ failureUnless predc = predToRule predc . singleton
 failureUnless' :: (a -> Bool) -> ValidationRule () a
 failureUnless' = flip predToRule ()
 
--- | Relabel a 'ValidationRule' with a new error generator.
+{- | Relabel a 'ValidationRule' with a different error, obtained from an "error generator".
+
+An "error generator" is a function that takes the validation target, that has failed validation, and returns a value
+representing error.
+
+Many combinators, like 'failureIf' and 'failureUnless', simply return the given error value
+within 'NonEmpty' upon failure. You can use 'label' to override this return value.
+-}
 label :: (a -> e) -> ValidationRule x a -> ValidationRule e a
 label errF (ValidationRule rule) = vrule $ \x -> case rule x of
     Success a -> Success a

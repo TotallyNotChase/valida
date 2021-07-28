@@ -16,8 +16,8 @@ newtype ValidationRule e a
   -- | Builds a 'ValidationRule' from a function to generate error and a validation predicate.
   = ValidationRule
   -- ^ The validation predicate.
-    (a -> Validation e a)
+    (a -> Validation e ())
 
 -- | Low level function to manually build a `ValidationRule`. You should use the combinators instead.
-vrule :: (a -> Validation e a) -> ValidationRule e a
+vrule :: (a -> Validation e ()) -> ValidationRule e a
 vrule = ValidationRule

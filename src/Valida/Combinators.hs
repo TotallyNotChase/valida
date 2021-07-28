@@ -41,7 +41,8 @@ infix 6 <?>
 (<?>) :: ValidationRule x a -> (a -> e) -> ValidationRule e a
 (<?>) = flip label
 
+-- | Utility to convert a regular predicate function to a 'ValidationRule'. __INTERNAL__
 predToRule :: (a -> Bool) -> e -> ValidationRule e a
 predToRule predc err = vrule $ \x -> if predc x
-    then Success x
+    then Success ()
     else Failure err

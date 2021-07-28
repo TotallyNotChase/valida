@@ -20,9 +20,15 @@ import Valida.Validation     (Validation (..))
 import Valida.ValidationRule (ValidationRule (..), vrule)
 import Valida.Validator      (Selector, Validator (..))
 
--- | Build a validator from a 'ValidationRule' and a 'Selector'.
+{- | Build a validator from a 'ValidationRule' and a 'Selector'.
+
+The 'Validator` first runs given 'selector' on its input to obtain the validation target. Then, it runs the
+'ValidationRule' on the target.
+
+If validation is successful, the validation target is put into the 'Validation' result.
+-}
 buildValidator :: ValidationRule e b -> Selector a b -> Validator e a b
-buildValidator (ValidationRule rule) selector = Validator $ rule . selector
+buildValidator (ValidationRule rule) selector = Validator $ (<$) <$> selector <*> (rule . selector)
 
 -- | A synonym for 'buildValidator' with its arguments flipped.
 infix 5 -?-

@@ -57,11 +57,7 @@ instance Semigroup e => Applicative (Validator e inp) where
 
 -- | Build a validator from a 'ValidationRule' and a 'Selector'.
 buildValidator :: ValidationRule e b -> Selector a b -> Validator e a b
-buildValidator (ValidationRule errF predc) selector = Validator
-    $ \y -> let target = selector y
-        in if predc target
-            then Success target
-            else Failure $ errF target
+buildValidator (ValidationRule rule) selector = Validator $ rule . selector
 
 -- | A synonym for 'buildValidator' with its arguments flipped.
 infix 5 -?-

@@ -10,12 +10,13 @@ module Valida
     , failureUnless'
     , label
     , toEither
+    , vrule
     , (-?-)
     , (<?>)
     ) where
 
 import Valida.Validation     (Validation (..), toEither)
-import Valida.ValidationRule (ValidationRule, failureIf, failureIf', failureUnless, failureUnless', label, (<?>))
+import Valida.ValidationRule (ValidationRule, failureIf, failureIf', failureUnless, failureUnless', label, vrule, (<?>))
 import Valida.Validator      (Selector, Validator, buildValidator, (-?-))
 
 {-
@@ -29,4 +30,3 @@ const UserData = object({
   type: union(literal('a'), literal('b'), literal('c')),
 });
 -}
-

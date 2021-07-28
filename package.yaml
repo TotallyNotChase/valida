@@ -30,6 +30,8 @@ ghc-options:
 
 library:
   source-dirs: src
+  exposed-modules:
+  - Valida
   ghc-options:
   - -O3
 

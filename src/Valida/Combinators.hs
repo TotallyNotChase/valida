@@ -167,15 +167,19 @@ mustContain' x = failureUnless' (elem x)
 -- Combining 'ValidationRule's
 ---------------------------------------------------------------------
 
+-- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
 orElse :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 orElse (ValidationRule rule1) (ValidationRule rule2) = vrule $ (<>) <$> rule1 <*> rule2
 
+-- | Build a rule that /only succeeds/ if __both__ of the given rules succeed. The very first failure is yielded.
 andAlso :: ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 andAlso vrule1 vrule2 = vrule1 <> vrule2
 
+-- | Build a rule that /succeeds/ if __any__ of the given rules succeed. If all fail, the errors are combined.
 satisfyAny :: (Foldable t, Semigroup e) => t (ValidationRule e a) -> ValidationRule e a
 satisfyAny = foldl1' orElse . toList
 
+-- | Build a rule that /only succeeds/ if __all__ of the given rules succeed. The very first failure is yielded.
 satisfyAll :: Foldable t => t (ValidationRule e a) -> ValidationRule e a
 satisfyAll = foldl1' andAlso . toList
 

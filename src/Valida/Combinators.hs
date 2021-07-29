@@ -1,29 +1,35 @@
 module Valida.Combinators
-    ( andAlso
-    , atleastContains
-    , atleastContains'
-    , failureIf
-    , failureIf'
+    ( -- * Primitive 'NonEmpty' combinators
+      failureIf
     , failureUnless
+      -- * Primitive /Unit/ combinators
+    , failureIf'
     , failureUnless'
-    , label
+      -- * Common derivates of primitive 'NonEmpty' combinators
+    , atleastContains
     , maxLengthOf
-    , maxLengthOf'
     , maxValueOf
-    , maxValueOf'
     , minLengthOf
-    , minLengthOf'
     , minValueOf
-    , minValueOf'
     , mustBe
-    , mustBe'
     , mustContain
-    , mustContain'
     , onlyContains
+      -- * Common derivates of primitive /Unit/ combinators
+    , atleastContains'
+    , maxLengthOf'
+    , maxValueOf'
+    , minLengthOf'
+    , minValueOf'
+    , mustBe'
+    , mustContain'
     , onlyContains'
+      -- * Combining 'ValidationRule's
+    , andAlso
     , orElse
     , satisfyAll
     , satisfyAny
+      -- * Reassigning corresponding error to 'ValidationRule'.
+    , label
     , (<?>)
     ) where
 
@@ -35,9 +41,9 @@ import Valida.Utils          (singleton)
 import Valida.Validation     (Validation (..))
 import Valida.ValidationRule (ValidationRule (..), vrule)
 
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 -- Primitive 'NonEmpty' combinators
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 
 -- | Build a rule that /fails/ with given error __if the given rule succeeds__.
 failureIf :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
@@ -47,9 +53,9 @@ failureIf predc = predToRule (not . predc) . singleton
 failureUnless :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
 failureUnless predc = predToRule predc . singleton
 
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 -- Primitive /Unit/ combinators
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 
 -- | Like 'failureIf' but uses /Unit/ as the 'ValidationRule' error type.
 failureIf' :: (a -> Bool) -> ValidationRule () a
@@ -59,9 +65,9 @@ failureIf' = flip predToRule () . (not .)
 failureUnless' :: (a -> Bool) -> ValidationRule () a
 failureUnless' = flip predToRule ()
 
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 -- Common derivates of primitive 'NonEmpty' combinators
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 
 {- | Build a equality rule.
 
@@ -121,9 +127,9 @@ prop> mustContain x = failureUnless (elem x)
 mustContain :: (Foldable t, Eq a) => a -> e -> ValidationRule (NonEmpty e) (t a)
 mustContain x = atleastContains (==x)
 
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 -- Common derivates of primitive /Unit/ combinators
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 
 -- | Like 'mustBe' but uses /Unit/ as the 'ValidationRule' error type.
 mustBe' :: Eq a => a -> ValidationRule () a
@@ -157,9 +163,9 @@ atleastContains' x = failureUnless' (any x)
 mustContain' :: (Foldable t, Eq a) => a -> ValidationRule () (t a)
 mustContain' x = failureUnless' (elem x)
 
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 -- Combining 'ValidationRule's
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 
 orElse :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 orElse (ValidationRule rule1) (ValidationRule rule2) = vrule $ (<>) <$> rule1 <*> rule2
@@ -173,9 +179,9 @@ satisfyAny = foldl1' orElse . toList
 satisfyAll :: Foldable t => t (ValidationRule e a) -> ValidationRule e a
 satisfyAll = foldl1' andAlso . toList
 
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 -- Reassigning corresponding error to 'ValidationRule'.
-----------------------------------------------------------------------------
+---------------------------------------------------------------------
 
 {- | Relabel a 'ValidationRule' with a different error, obtained from an "error generator".
 

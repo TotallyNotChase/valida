@@ -1,10 +1,11 @@
 module Valida
     ( Selector
-    -- | Re-exports of "Valida.Combinators".
+      -- | Re-exports of "Valida.Combinators".
     , module Valida.Combinators
     , Validation (..)
     , ValidationRule
     , Validator
+    , buildValidator
     , fromEither
     , toEither
     , vrule

@@ -5,7 +5,7 @@ module Valida
     , Validation (..)
     , ValidationRule
     , Validator
-    , buildValidator
+    , select
     , fromEither
     , toEither
     , vrule
@@ -25,14 +25,14 @@ The 'Validator` first runs given __selector__ on its input to obtain the validat
 
 If validation is successful, the validation target is put into the 'Validation' result.
 -}
-buildValidator :: ValidationRule e b -> Selector a b -> Validator e a b
-buildValidator (ValidationRule rule) selector = Validator $ (<$) <$> selector <*> (rule . selector)
+select :: ValidationRule e b -> Selector a b -> Validator e a b
+select (ValidationRule rule) selector = Validator $ (<$) <$> selector <*> (rule . selector)
 
--- | A synonym for 'buildValidator' with its arguments flipped.
+-- | A synonym for 'select' with its arguments flipped.
 infix 5 -?-
 
 (-?-) :: Selector a b -> ValidationRule e b -> Validator e a b
-(-?-) = flip buildValidator
+(-?-) = flip select
 
 {-
 const LoginData = object({ expires: number });

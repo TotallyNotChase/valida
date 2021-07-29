@@ -26,3 +26,11 @@ instance Semigroup e => Applicative (Validation e) where
     Success _ <*> Failure e = Failure e
     Failure e <*> Success _ = Failure e
     Failure x <*> Failure y = Failure $ x <> y
+
+{- |
+* '(<>)' behaves similar to the 'Either' semigroup. i.e Returns the first 'Success'. But also accumulates 'Failure's.
+-}
+instance (Semigroup e, Semigroup a) => Semigroup (Validation e a) where
+    s@(Success _) <> _     = s
+    _ <> s@(Success _)     = s
+    Failure x <> Failure y = Failure $ x <> y

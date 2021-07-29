@@ -19,7 +19,7 @@ The Applicative instance can be understood as-
     $ (\\inp -> ff inp <*> v inp)
 @
 
-i.e Run __ff__ and __v__ on the input, and compose the results (of type 'Validation') with '<*>'.
+i.e Run __ff__ and __v__ on the input, and compose the results (of type 'Validation') with '(<*>)'.
 
 The 'pure' implementation creates a 'Validator' that, when run, takes __any__ input, /ignores it/, and returns
 the given value wrapped in 'Success'.

@@ -5,9 +5,10 @@ module Valida
     , Validation (..)
     , ValidationRule
     , Validator (validate)
-    , select
     , fromEither
+    , select
     , toEither
+    , verify
     , vrule
     , (-?-)
     ) where
@@ -34,14 +35,12 @@ infix 5 -?-
 (-?-) :: Selector a b -> ValidationRule e b -> Validator e a b
 (-?-) = flip select
 
-{-
-const LoginData = object({ expires: number });
+{- | Build a basic validator from a 'ValidationRule'.
 
-const UserData = object({
-  username: string,
-  password: string,
-  login: option(string),
-  sessions: map(string, LoginData),
-  type: union(literal('a'), literal('b'), literal('c')),
-});
+The 'Validator' runs the rule on its input. If validation is successful, the input is put into the 'Validation'
+result.
+
+prop> verify = flip select id
 -}
+verify :: ValidationRule e a -> Validator e a a
+verify = (-?-) id

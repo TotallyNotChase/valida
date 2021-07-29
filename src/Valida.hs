@@ -4,7 +4,7 @@ module Valida
     , module Valida.Combinators
     , Validation (..)
     , ValidationRule
-    , Validator
+    , Validator (validate)
     , select
     , fromEither
     , toEither

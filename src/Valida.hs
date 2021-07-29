@@ -24,7 +24,7 @@ import Valida.Validator       (Selector, Validator (..))
 
 {- | Build a validator from a 'ValidationRule' and a 'Selector'.
 
-The 'Validator` first runs given 'selector' on its input to obtain the validation target. Then, it runs the
+The 'Validator` first runs given __selector__ on its input to obtain the validation target. Then, it runs the
 'ValidationRule' on the target.
 
 If validation is successful, the validation target is put into the 'Validation' result.

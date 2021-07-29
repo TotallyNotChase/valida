@@ -33,6 +33,7 @@ library
       Valida.Utils
       Valida.Validation
       Valida.ValidationRule
+      Valida.ValidationUtils
       Valida.Validator
       Paths_valida
   hs-source-dirs:

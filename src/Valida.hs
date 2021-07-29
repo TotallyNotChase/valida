@@ -1,45 +1,17 @@
 module Valida
     ( Selector
+    -- | Re-exports of "Valida.Combinators".
+    , module Valida.Combinators
     , Validation (..)
     , ValidationRule
     , Validator
-    , andAlso
-    , atleastContains
-    , atleastContains'
-    , buildValidator
-    , failureIf
-    , failureIf'
-    , failureUnless
-    , failureUnless'
     , fromEither
-    , label
-    , maxLengthOf
-    , maxLengthOf'
-    , maxValueOf
-    , maxValueOf'
-    , minLengthOf
-    , minLengthOf'
-    , minValueOf
-    , minValueOf'
-    , mustBe
-    , mustBe'
-    , mustContain
-    , mustContain'
-    , onlyContains
-    , onlyContains'
-    , orElse
-    , satisfyAll
-    , satisfyAny
     , toEither
     , vrule
     , (-?-)
-    , (<?>)
     ) where
 
-import Valida.Combinators     (andAlso, atleastContains, atleastContains', failureIf, failureIf', failureUnless,
-                               failureUnless', label, maxLengthOf, maxLengthOf', maxValueOf, maxValueOf', minLengthOf,
-                               minLengthOf', minValueOf, minValueOf', mustBe, mustBe', mustContain, mustContain',
-                               onlyContains, onlyContains', orElse, satisfyAll, satisfyAny, (<?>))
+import Valida.Combinators
 import Valida.Validation      (Validation (..))
 import Valida.ValidationRule  (ValidationRule (..), vrule)
 import Valida.ValidationUtils (fromEither, toEither)

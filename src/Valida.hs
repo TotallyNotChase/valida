@@ -8,6 +8,7 @@ module Valida
     , failureIf'
     , failureUnless
     , failureUnless'
+    , fromEither
     , label
     , toEither
     , vrule
@@ -18,7 +19,7 @@ module Valida
 import Valida.Combinators     (failureIf, failureIf', failureUnless, failureUnless', label, (<?>))
 import Valida.Validation      (Validation (..))
 import Valida.ValidationRule  (ValidationRule (..), vrule)
-import Valida.ValidationUtils (toEither)
+import Valida.ValidationUtils (fromEither, toEither)
 import Valida.Validator       (Selector, Validator (..))
 
 {- | Build a validator from a 'ValidationRule' and a 'Selector'.

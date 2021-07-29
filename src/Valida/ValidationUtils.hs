@@ -1,5 +1,6 @@
 module Valida.ValidationUtils
-    ( toEither
+    ( fromEither
+    , toEither
     ) where
 
 import Valida.Validation (Validation (..))
@@ -14,3 +15,14 @@ Given, __Validation a b__-
 toEither :: Validation a b -> Either a b
 toEither (Failure e) = Left e
 toEither (Success a) = Right a
+
+{- | Convert a 'Either' to an 'Validation'.
+
+Given, __Either a b__-
+
+  * __Left a__ is converted to __Failure a__.
+  * __Right b__ is converted to __Success b__.
+-}
+fromEither :: Either a b -> Validation a b
+fromEither (Left e)  = Failure e
+fromEither (Right a) = Success a

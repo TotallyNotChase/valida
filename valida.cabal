@@ -55,6 +55,7 @@ test-suite valida-test
   build-depends:
       base >=4.7 && <5
     , happy
+    , quickcheck
     , smallcheck
     , valida
   default-language: Haskell2010

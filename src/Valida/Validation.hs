@@ -9,13 +9,20 @@ data Validation e a
   -- | Represents a successful validation with the validated value.
   | Success a
 
+{- |
+* 'fmap' maps given function over a 'Success' value, does nothing on 'Failure' value.
+-}
 instance Functor (Validation e) where
     fmap _ (Failure e) = Failure e
     fmap f (Success a) = Success $ f a
 
+{- |
+* 'pure' is a 'Success' value.
+* '(<*>)' behaves similar to 'Either', but accumulates failures instead of stopping.
+-}
 instance Semigroup e => Applicative (Validation e) where
     pure = Success
-    (Success f) <*> (Success b)   = Success $ f b
-    (Success _) <*> (Failure e)   = Failure e
-    (Failure e) <*> (Success _)   = Failure e
-    (Failure e1) <*> (Failure e2) = Failure $ e1 <> e2
+    Success f <*> Success b = Success $ f b
+    Success _ <*> Failure e = Failure e
+    Failure e <*> Success _ = Failure e
+    Failure x <*> Failure y = Failure $ x <> y

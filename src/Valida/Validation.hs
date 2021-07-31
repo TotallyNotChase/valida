@@ -8,6 +8,7 @@ data Validation e a
   = Failure e
   -- | Represents a successful validation with the validated value.
   | Success a
+  deriving (Eq, Show)
 
 {- |
 * 'fmap' maps given function over a 'Success' value, does nothing on 'Failure' value.

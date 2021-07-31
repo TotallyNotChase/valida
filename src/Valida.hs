@@ -10,7 +10,7 @@ module Valida
     , toEither
     , verify
     , vrule
-    , (-?-)
+    , (-?>)
     ) where
 
 import Valida.Combinators
@@ -30,10 +30,10 @@ select :: ValidationRule e b -> Selector a b -> Validator e a b
 select (ValidationRule rule) selector = Validator $ (<$) <$> selector <*> (rule . selector)
 
 -- | A synonym for 'select' with its arguments flipped.
-infix 5 -?-
+infix 5 -?>
 
-(-?-) :: Selector a b -> ValidationRule e b -> Validator e a b
-(-?-) = flip select
+(-?>) :: Selector a b -> ValidationRule e b -> Validator e a b
+(-?>) = flip select
 
 {- | Build a basic validator from a 'ValidationRule'.
 
@@ -43,4 +43,4 @@ result.
 prop> verify = flip select id
 -}
 verify :: ValidationRule e a -> Validator e a a
-verify = (-?-) id
+verify = (-?>) id

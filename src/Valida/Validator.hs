@@ -3,7 +3,7 @@ module Valida.Validator
     , Validator (..)
     ) where
 
-import Valida.Validation     (Validation (..))
+import Valida.Validation (Validation (..))
 
 -- | Convenience alias for functions that "select" a record field.
 type Selector a b = a -> b

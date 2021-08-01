@@ -1,4 +1,4 @@
-module Valida.Utils
+module Utils
     ( singleton
     ) where
 

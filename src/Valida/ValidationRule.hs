@@ -27,8 +27,8 @@ newtype ValidationRule e a
 -}
 instance Semigroup (ValidationRule e a) where
     ValidationRule rl1 <> ValidationRule rl2 = ValidationRule
-        $ fromEither
-        . liftA2 const (toEither . rl1) (toEither . rl2)
+        $ (fromEither .)
+        $ liftA2 const <$> toEither . rl1 <*> toEither . rl2
 
 -- | Low level function to manually build a `ValidationRule`. You should use the combinators instead.
 vrule :: (a -> Validation e ()) -> ValidationRule e a

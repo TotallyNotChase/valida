@@ -3,6 +3,8 @@ module Valida.Validator
     , Validator (..)
     ) where
 
+import Control.Applicative (Applicative (liftA2))
+
 import Valida.Validation (Validation (..))
 
 -- | Convenience alias for functions that "select" a record field.
@@ -50,4 +52,4 @@ instance Semigroup e => Applicative (Validator e inp) where
         pure (f a))
     @
     -}
-    (Validator ff) <*> (Validator v) = Validator $ (<*>) <$> ff <*> v
+    (Validator ff) <*> (Validator v) = Validator $ liftA2 (<*>) ff v

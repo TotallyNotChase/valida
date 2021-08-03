@@ -11,7 +11,12 @@ module Valida
     , verify
     , vrule
     , (-?>)
+    -- * Reassigning corresponding error to 'ValidationRule'.
+    , label
+    , (<?>)
     ) where
+
+import Control.Applicative (Applicative (liftA2))
 
 import Valida.Combinators
 import Valida.Validation      (Validation (..))
@@ -27,13 +32,36 @@ The 'Validator` first runs given __selector__ on its input to obtain the validat
 If validation is successful, the validation target is put into the 'Validation' result.
 -}
 select :: ValidationRule e b -> Selector a b -> Validator e a b
-select (ValidationRule rule) selector = Validator $ (<$) <$> selector <*> (rule . selector)
+select (ValidationRule rule) selector = Validator $ liftA2 (<$) selector (rule . selector)
 
 -- | A synonym for 'select' with its arguments flipped.
 infix 5 -?>
 
 (-?>) :: Selector a b -> ValidationRule e b -> Validator e a b
 (-?>) = flip select
+
+---------------------------------------------------------------------
+-- Reassigning corresponding error to 'ValidationRule'.
+---------------------------------------------------------------------
+
+{- | Relabel a 'ValidationRule' with a different error, obtained from an "error generator".
+
+An "error generator" is a function that takes the validation target, that has failed validation, and returns a value
+representing error.
+
+Many combinators, like 'failureIf' and 'failureUnless', simply return the given error value
+within 'NonEmpty' upon failure. You can use 'label' to override this return value.
+-}
+label :: (a -> e) -> ValidationRule x a -> ValidationRule e a
+label errF (ValidationRule rule) = vrule $ \x -> case rule x of
+    Failure _ -> Failure (errF x)
+    _         -> Success ()
+
+-- | A synonym for 'label' with its arguments flipped.
+infix 6 <?>
+
+(<?>) :: ValidationRule x a -> (a -> e) -> ValidationRule e a
+(<?>) = flip label
 
 {- | Build a basic validator from a 'ValidationRule'.
 

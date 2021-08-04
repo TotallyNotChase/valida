@@ -45,7 +45,8 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - happy
+    - tasty
+    - tasty-smallcheck
+    - tasty-hunit
     - smallcheck
-    - quickcheck
     - valida

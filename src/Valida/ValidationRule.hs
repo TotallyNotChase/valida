@@ -3,10 +3,7 @@ module Valida.ValidationRule
     , vrule
     ) where
 
-import Control.Applicative (Applicative (liftA2))
-
-import Valida.Validation      (Validation (..))
-import Valida.ValidationUtils (fromEither, toEither)
+import Valida.Validation (Validation (..))
 
 {- | The rule a Validator uses to run validation.
 
@@ -22,13 +19,15 @@ newtype ValidationRule e a
     (a -> Validation e ())
 
 {- |
-* '(<>)' treats 'Validation' result similar to 'Either' applicative composition. i.e Yields first encountered
-  'Success' if, and only if, both rules yield 'Success'. Otherwise, first 'Failure' is yielded.
+* '(<>)' creates a new `ValidationRule` that only succeeds when both given rule succeed.
+Otherwise left-most failure is returned.
 -}
 instance Semigroup (ValidationRule e a) where
     ValidationRule rl1 <> ValidationRule rl2 = ValidationRule
-        $ (fromEither .)
-        $ liftA2 const <$> toEither . rl1 <*> toEither . rl2
+        $ \x -> case (rl1 x, rl2 x) of
+            (Failure e, _) -> Failure e
+            (_, Failure e) -> Failure e
+            _              -> Success ()
 
 -- | Low level function to manually build a `ValidationRule`. You should use the combinators instead.
 vrule :: (a -> Validation e ()) -> ValidationRule e a

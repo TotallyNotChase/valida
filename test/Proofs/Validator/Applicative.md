@@ -38,7 +38,7 @@ fmap f (Success a) = Success (f a)                                              
 **Note**: The following proofs assume the `Validation` functor instance is lawful.
 
 ## Identity law
-> pure id <*> v = v; forall e inp a. Semigroup e => Validator e inp a
+> pure id <\*> v = v; forall e inp a. Semigroup e => Validator e inp a
 
 **[L.H.S]**
 ```hs
@@ -64,7 +64,7 @@ fmap f (Success a) = Success (f a)                                              
 Thus, Identity law is satisfied.
 
 ## Composition law
-> pure (.) <*> u <*> v <*> w = u <*> (v <*> w); forall e inp a b c. Semigroup e => (w :: Validator e inp a), (Eq c => u :: Validator e inp (b -> c)), (v :: Validator e inp (a -> b))
+> pure (.) <\*> u <\*> v <\*> w = u <\*> (v <\*> w); forall e inp a b c. Semigroup e => (w :: Validator e inp a), (Eq c => u :: Validator e inp (b -> c)), (v :: Validator e inp (a -> b))
 
 **Note**: Denoting the three validators, `u`, `v`, and `w` as `Validator x`, `Validator y`, and `Validator z` respectively.
 
@@ -100,7 +100,7 @@ Thus, Identity law is satisfied.
 Thus, Composition law is satisfied.
 
 ## Homomorphism law
-> pure f <*> pure x = pure (f x); forall a b. (x :: a), (f :: a -> b)
+> pure f <\*> pure x = pure (f x); forall a b. (x :: a), (f :: a -> b)
 
 **[L.H.S]**
 ```hs
@@ -125,7 +125,7 @@ Thus, Composition law is satisfied.
 Thus, Homomorphism law is satisfied.
 
 ## Interchange law
-> u <*> pure y = pure ($ y) <*> u; forall a b. (y :: a), (u :: forall e inp. Semigroup e => Validator e inp (a -> b))
+> u <\*> pure y = pure ($ y) <\*> u; forall a b. (y :: a), (u :: forall e inp. Semigroup e => Validator e inp (a -> b))
 
 **[L.H.S]**
 ```hs
@@ -155,7 +155,7 @@ Thus, Homomorphism law is satisfied.
 Thus, Interchange law is satisfied.
 
 ## Functor-Applicative relation
-> fmap f x = pure f <*> x; forall a b. (x :: forall e inp. Semigroup e => Validator e inp a), (f :: a -> b)
+> fmap f x = pure f <\*> x; forall a b. (x :: forall e inp. Semigroup e => Validator e inp a), (f :: a -> b)
 
 **[L.H.S]**
 ```hs

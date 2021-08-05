@@ -21,7 +21,7 @@ fmap f (Success a) = Success (f a)                                              
 ```
 
 ## Identity law
-> pure id <*> v = v; forall v :: forall e a. Semigroup e => Validation e a
+> pure id <\*> v = v; forall v :: forall e a. Semigroup e => Validation e a
 
 ### Case a - `v = forall e. Semigroup e => Failure e`
 
@@ -63,7 +63,7 @@ fmap f (Success a) = Success (f a)                                              
 Thus, Identity law is satisfied.
 
 ## Composition law
-> pure (.) <*> u <*> v <*> w = u <*> (v <*> w); forall e a b c. Semigroup e => (w :: Validation e a), (Eq c => u :: Validation e (b -> c)), (v :: Validation e (a -> b))
+> pure (.) <\*> u <\*> v <\*> w = u <\*> (v <\*> w); forall e a b c. Semigroup e => (w :: Validation e a), (Eq c => u :: Validation e (b -> c)), (v :: Validation e (a -> b))
 
 ### Case a - `w = forall a b c. u = Success (f :: b -> c), v = Success (g :: a -> b), w = Success a`
 
@@ -181,7 +181,7 @@ Thus, Identity law is satisfied.
 Thus, Composition law is satisfied.
 
 ## Homomorphism law
-> pure f <*> pure x = pure (f x); forall a b. (x :: a), (f :: a -> b)
+> pure f <\*> pure x = pure (f x); forall a b. (x :: a), (f :: a -> b)
 
 **[L.H.S]**
 ```hs
@@ -201,7 +201,7 @@ Thus, Composition law is satisfied.
 Thus, Homomorphism law is satisfied.
 
 ## Interchange law
-> u <*> pure y = pure ($ y) <*> u; forall a b. (y :: a), (u :: forall e. Semigroup e => Validation e (a -> b))
+> u <\*> pure y = pure ($ y) <\*> u; forall a b. (y :: a), (u :: forall e. Semigroup e => Validation e (a -> b))
 
 ### Case a - `u = forall e. Semigroup e => Failure e`
 
@@ -247,7 +247,7 @@ Thus, Homomorphism law is satisfied.
 Thus, Interchange law is satisfied.
 
 ## Functor-Applicative relation
-> fmap f x = pure f <*> x; forall a b. (x :: forall e. Semigroup e => Validation e a), (f :: a -> b)
+> fmap f x = pure f <\*> x; forall a b. (x :: forall e. Semigroup e => Validation e a), (f :: a -> b)
 
 ### Case a - `x = forall e. Semigroup e => Failure e`
 

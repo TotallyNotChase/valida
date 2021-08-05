@@ -13,7 +13,7 @@ Failure x <> Failure y = Failure (x <> y)                                  {- (i
 ```
 
 ## Associativity law
-> x <> (y <> z) = (x <> y) <> z; forall (x :: forall e a. Semigroup e => Validation e a), (y :: forall e a. Semigroup e => Validation e a), (z :: forall e a. Semigroup e => Validation e a)
+> x <> (y <> z) = (x <> y) <> z; forall e a. Semigroup e => (x :: Validation e a), (y :: Validation e a), (z :: Validation e a)
 
 ### Case a - All three of `x, y, z` are `forall e. Semigroup e => Failure e`
 

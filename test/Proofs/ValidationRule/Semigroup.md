@@ -19,7 +19,7 @@ ValidationRule rl1 <> ValidationRule rl2 = ValidationRule               {- (i) -
 ```
 
 ## Associativity law
-> x <> (y <> z) = (x <> y) <> z; forall (x :: forall e a. ValidationRule e a), (y :: forall e a. ValidationRule e a), (z :: forall e a. ValidationRule e a)
+> x <> (y <> z) = (x <> y) <> z; forall e a. (x :: ValidationRule e a), (y :: ValidationRule e a), (z :: ValidationRule e a)
 
 **[L.H.S]**
 ```hs

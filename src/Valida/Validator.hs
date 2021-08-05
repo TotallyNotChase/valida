@@ -30,7 +30,7 @@ newtype Validator e inp a = Validator { validate :: inp -> Validation e a }
 
 instance Functor (Validator e inp) where
     -- | Run the validator function, and __fmap__ given function over the result.
-    fmap f (Validator v) = Validator $ (f <$>) . v
+    fmap f (Validator v) = Validator $ fmap f . v
 
 instance Semigroup e => Applicative (Validator e inp) where
     -- | Validator taking any input and returning given value in __Success__.
@@ -52,4 +52,10 @@ instance Semigroup e => Applicative (Validator e inp) where
         pure (f a))
     @
     -}
-    (Validator ff) <*> (Validator v) = Validator $ liftA2 (<*>) ff v
+    Validator ff <*> Validator v = Validator $ liftA2 (<*>) ff v
+
+{- |
+* '(<>)' applies the inp over both validator functions, and combines the 'Validation' results using '(<>)'.
+-}
+instance Semigroup e => Semigroup (Validator e inp a) where
+    Validator f <> Validator g = Validator $ f <> g

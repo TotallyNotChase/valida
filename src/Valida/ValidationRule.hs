@@ -25,9 +25,9 @@ Otherwise left-most failure is returned.
 instance Semigroup (ValidationRule e a) where
     ValidationRule rl1 <> ValidationRule rl2 = ValidationRule
         $ \x -> case (rl1 x, rl2 x) of
-            (Failure e, _) -> Failure e
-            (_, Failure e) -> Failure e
-            _              -> Success ()
+            (f@(Failure _), _) -> f
+            (_, f@(Failure _)) -> f
+            _                  -> Success ()
 
 -- | Low level function to manually build a `ValidationRule`. You should use the combinators instead.
 vrule :: (a -> Validation e ()) -> ValidationRule e a

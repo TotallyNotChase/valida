@@ -2,16 +2,19 @@ module Valida
     ( Selector
       -- | Re-exports of "Valida.Combinators".
     , module Valida.Combinators
+      -- * Primary data types.
     , Validation (..)
     , ValidationRule
     , Validator (validate)
-    , fromEither
+      -- * Functions for building Valida data types.
     , select
-    , toEither
     , verify
     , vrule
     , (-?>)
-    -- * Reassigning corresponding error to 'ValidationRule'.
+      -- * Utility functions for Valida data types.
+    , fromEither
+    , toEither
+      -- * Reassigning corresponding error to 'ValidationRule'.
     , label
     , (<?>)
     ) where

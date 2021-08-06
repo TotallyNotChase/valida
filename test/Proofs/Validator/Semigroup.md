@@ -26,6 +26,8 @@ _         <> Success a = Success a                                              
 Failure x <> Failure y = Failure (x <> y)                                          {- (v) -}
 ```
 
+**Note**: The following proofs assume the `Validation` semigroup instance is lawful.
+
 ## Associativity law
 > x <> (y <> z) = (x <> y) <> z; forall e inp a. Semigroup e => (x :: Validator e inp a), (y :: Validator e inp a), (z :: Validator e inp a)
 

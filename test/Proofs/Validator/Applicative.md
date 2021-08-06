@@ -35,7 +35,7 @@ fmap f (Failure e) = Failure e                                                  
 fmap f (Success a) = Success (f a)                                                         {- (x) -}
 ```
 
-**Note**: The following proofs assume the `Validation` functor instance is lawful.
+**Note**: The following proofs assume the `Validation` functor and applicative instances are lawful.
 
 ## Identity law
 > pure id <\*> v = v; forall e inp a. Semigroup e => Validator e inp a

@@ -55,7 +55,7 @@ ValidationRule rl1 <> ValidationRule rl2 = ValidationRule               {- (i) -
     )
 = ValidationRule                                                   {- Flatten case arguments -}
     (\x -> case (rl1 x, rl2 x, rl3 x) of
-      (Failure e, _) -> Failure e
+      (Failure e, _, _) -> Failure e
       (_, Failure e, _) -> Failure e
       (_, _, Failure e) -> Failure e
       _              -> Success ()
@@ -96,7 +96,7 @@ ValidationRule rl1 <> ValidationRule rl2 = ValidationRule               {- (i) -
     )
 = ValidationRule                                                   {- Flatten case arguments -}
     (\x -> case (rl1 x, rl2 x, rl3 x) of
-      (Failure e, _) -> Failure e
+      (Failure e, _, _) -> Failure e
       (_, Failure e, _) -> Failure e
       (_, _, Failure e) -> Failure e
       _              -> Success ()

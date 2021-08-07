@@ -46,7 +46,7 @@ fmap f (Success a) = Success (f a)                         {- (iii) -}
 Thus, Identity law is satisfied.
 
 ## Composition law
-> fmap (f . g) v = (fmap f . fmap g) v; forall a b c. (v :: forall e inp. Validator e inp a), (Eq c => f :: (b -> c)), (g :: (a -> b))
+> fmap (f . g) v = (fmap f . fmap g) v; forall a b c. Eq c => (v :: forall e inp. Validator e inp a), (f :: (b -> c)), (g :: (a -> b))
 
 **[L.H.S]**
 ```hs

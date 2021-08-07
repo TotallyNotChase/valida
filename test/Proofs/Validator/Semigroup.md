@@ -11,7 +11,7 @@ data Validation e a = Failure e | Success a
 ### <ins>Relevant equations</ins>:-
 ```hs
 (<>) :: Semigroup e => Validator e inp a -> Validator e inp a -> Validator e inp a
-Validator f <> Validator g = Validator $ f <> g                                    {- (i) -}
+Validator f <> Validator g = Validator (f <> g)                                    {- (i) -}
 ```
 
 ```hs

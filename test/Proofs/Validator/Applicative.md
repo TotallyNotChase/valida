@@ -64,7 +64,7 @@ fmap f (Success a) = Success (f a)                                              
 Thus, Identity law is satisfied.
 
 ## Composition law
-> pure (.) <\*> u <\*> v <\*> w = u <\*> (v <\*> w); forall e inp a b c. Semigroup e => (w :: Validator e inp a), (Eq c => u :: Validator e inp (b -> c)), (v :: Validator e inp (a -> b))
+> pure (.) <\*> u <\*> v <\*> w = u <\*> (v <\*> w); forall e inp a b c. (Semigroup e, Eq c) => (w :: Validator e inp a), (u :: Validator e inp (b -> c)), (v :: Validator e inp (a -> b))
 
 **Note**: Denoting the three validators, `u`, `v`, and `w` as `Validator x`, `Validator y`, and `Validator z` respectively.
 

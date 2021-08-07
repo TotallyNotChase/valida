@@ -1,5 +1,6 @@
 module Valida.Validation
     ( Validation (..)
+    , validation
     ) where
 
 -- | Like 'Either', but accumulates failures upon applicative composition.
@@ -35,3 +36,11 @@ instance Semigroup e => Semigroup (Validation e a) where
     s@(Success _) <> _             = s
     _             <> s@(Success _) = s
     Failure x     <> Failure y     = Failure $ x <> y
+
+{- | Case analysis for 'Validation', i.e catamorphism.
+
+In case of 'Failure e', apply the first function to e; in case of 'Success a', apply the second function to a.
+-}
+validation :: (e -> c) -> (a -> c) -> Validation e a -> c
+validation ef _ (Failure e) = ef e
+validation _ af (Success e) = af e

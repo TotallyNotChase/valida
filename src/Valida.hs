@@ -14,6 +14,7 @@ module Valida
       -- * Utility functions for Valida data types.
     , fromEither
     , toEither
+    , validation
       -- * Reassigning corresponding error to 'ValidationRule'.
     , label
     , (<?>)
@@ -22,7 +23,7 @@ module Valida
 import Control.Applicative (Applicative (liftA2))
 
 import Valida.Combinators
-import Valida.Validation      (Validation (..))
+import Valida.Validation      (Validation (..), validation)
 import Valida.ValidationRule  (ValidationRule (..), vrule)
 import Valida.ValidationUtils (fromEither, toEither)
 import Valida.Validator       (Selector, Validator (..))

@@ -28,6 +28,7 @@ module Valida.Combinators
     , orElse
     , satisfyAll
     , satisfyAny
+    , (</>)
     ) where
 
 import Control.Applicative (Applicative (liftA2))
@@ -165,13 +166,22 @@ mustContain' x = failureUnless' (elem x)
 -- Combining 'ValidationRule's
 ---------------------------------------------------------------------
 
+-- | A synonym for 'orElse'. Satisfies associativity law and hence forms a semigroup.
+infixr 6 </>
+
+(</>) :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
+ValidationRule rule1 </> ValidationRule rule2 = vrule $ liftA2 (<>) rule1 rule2
+
 -- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
 orElse :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
-orElse (ValidationRule rule1) (ValidationRule rule2) = vrule $ liftA2 (<>) rule1 rule2
+orElse = (</>)
 
--- | Build a rule that /only succeeds/ if __both__ of the given rules succeed. The very first failure is yielded.
+{- | Build a rule that /only succeeds/ if __both__ of the given rules succeed. The very first failure is yielded.
+
+This is the same as the semigroup operation (i.e '(<>)') on 'ValidationRule'.
+-}
 andAlso :: ValidationRule e a -> ValidationRule e a -> ValidationRule e a
-andAlso vrule1 vrule2 = vrule1 <> vrule2
+andAlso = (<>)
 
 -- | Build a rule that /succeeds/ if __any__ of the given rules succeed. If all fail, the errors are combined.
 satisfyAny :: (Foldable t, Semigroup e) => t (ValidationRule e a) -> ValidationRule e a

@@ -124,7 +124,7 @@ prop> mustContain x = atleastContains (==x)
 prop> mustContain x = failureUnless (elem x)
 -}
 mustContain :: (Foldable t, Eq a) => a -> e -> ValidationRule (NonEmpty e) (t a)
-mustContain x = atleastContains (==x)
+mustContain x = failureUnless (elem x)
 
 ---------------------------------------------------------------------
 -- Common derivates of primitive /Unit/ combinators

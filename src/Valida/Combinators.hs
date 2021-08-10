@@ -188,7 +188,12 @@ ValidationRule rule1 </> ValidationRule rule2 = vrule $ liftA2 (<>) rule1 rule2
 
 infixr 6 `orElse`
 
--- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
+{- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
+
+prop> rule1 `orElse` (rule2 `orElse` rule3) = (rule1 `orElse` rule2) `orElse` rule3
+prop> falseRule e `orElse` rule = rule
+prop> rule `orElse` falseRule e = rule
+-}
 orElse :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 orElse = (</>)
 
@@ -205,15 +210,32 @@ infixr 6 `andAlso`
 {- | Build a rule that /only succeeds/ if __both__ of the given rules succeed. The very first failure is yielded.
 
 This is the same as the semigroup operation (i.e '(<>)') on 'ValidationRule'.
+
+prop> rule1 `andAlso` (rule2 `andAlso` rule3) = (rule1 `andAlso` rule2) `andAlso` rule3
+prop> mempty `andAlso` rule = rule
+prop> rule `andAlso` mempty = rule
 -}
 andAlso :: ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 andAlso = (<>)
 
--- | Build a rule that /succeeds/ if __any__ of the given rules succeed. If all fail, the errors are combined.
+{- | Build a rule that /succeeds/ if __any__ of the given rules succeed. If all fail, the errors are combined.
+
+prop> satisfyAny = foldl1 orElse
+prop> satisfyAny = foldr1 orElse
+prop> satisfyAny = foldl orElse falseRule
+prop> satisfyAny = foldr orElse falseRule
+-}
 satisfyAny :: (Foldable t, Semigroup e) => t (ValidationRule e a) -> ValidationRule e a
 satisfyAny = foldr1 (</>)
 
--- | Build a rule that /only succeeds/ if __all__ of the given rules succeed. The very first failure is yielded.
+{- | Build a rule that /only succeeds/ if __all__ of the given rules succeed. The very first failure is yielded.
+
+prop> satisfyAll = fold
+prop> satisfyAll = foldl1 andAlso
+prop> satisfyAll = foldr1 andAlso
+prop> satisfyAll = foldl andAlso mempty
+prop> satisfyAll = foldr andAlso mempty
+-}
 satisfyAll :: Foldable t => t (ValidationRule e a) -> ValidationRule e a
 satisfyAll = fold
 

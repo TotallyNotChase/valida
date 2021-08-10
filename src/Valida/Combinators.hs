@@ -181,12 +181,12 @@ mustContain' x = failureUnless' (elem x)
 ---------------------------------------------------------------------
 
 -- | A synonym for 'orElse'. Satisfies associativity law and hence forms a semigroup.
-infixr 6 </>
+infixr 5 </>
 
 (</>) :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 ValidationRule rule1 </> ValidationRule rule2 = vrule $ liftA2 (<>) rule1 rule2
 
-infixr 6 `orElse`
+infixr 5 `orElse`
 
 {- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
 

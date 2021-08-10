@@ -32,8 +32,7 @@ module Valida.Combinators
     ) where
 
 import Control.Applicative (Applicative (liftA2))
-import Data.Foldable       (toList)
-import Data.List           (foldl1')
+import Data.Foldable       (Foldable (fold))
 import Data.List.NonEmpty  (NonEmpty)
 
 import Valida.Utils          (singleton)
@@ -199,11 +198,11 @@ andAlso = (<>)
 
 -- | Build a rule that /succeeds/ if __any__ of the given rules succeed. If all fail, the errors are combined.
 satisfyAny :: (Foldable t, Semigroup e) => t (ValidationRule e a) -> ValidationRule e a
-satisfyAny = foldl1' orElse . toList
+satisfyAny = foldr1 (</>)
 
 -- | Build a rule that /only succeeds/ if __all__ of the given rules succeed. The very first failure is yielded.
 satisfyAll :: Foldable t => t (ValidationRule e a) -> ValidationRule e a
-satisfyAll = foldl1' andAlso . toList
+satisfyAll = fold
 
 -- | Utility to convert a regular predicate function to a 'ValidationRule'. __INTERNAL__
 predToRule :: (a -> Bool) -> e -> ValidationRule e a

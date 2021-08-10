@@ -185,9 +185,13 @@ infixr 6 </>
 (</>) :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 ValidationRule rule1 </> ValidationRule rule2 = vrule $ liftA2 (<>) rule1 rule2
 
+infixr 6 `orElse`
+
 -- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
 orElse :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 orElse = (</>)
+
+infixr 6 `andAlso`
 
 {- | Build a rule that /only succeeds/ if __both__ of the given rules succeed. The very first failure is yielded.
 

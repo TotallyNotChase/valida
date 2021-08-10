@@ -25,6 +25,7 @@ module Valida.Combinators
     , onlyContains'
       -- * Combining 'ValidationRule's
     , andAlso
+    , falseRule
     , orElse
     , satisfyAll
     , satisfyAny
@@ -190,6 +191,14 @@ infixr 6 `orElse`
 -- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
 orElse :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 orElse = (</>)
+
+{- | A 'ValidationRule' that always fails with supplied error. This is the identity of 'orElse' (i.e '(</>)').
+
+prop> falseRule `orElse` rule = rule
+prop> rule `orElse` falseRule = rule
+-}
+falseRule :: Monoid e => ValidationRule e a
+falseRule = vrule $ const $ Failure mempty
 
 infixr 6 `andAlso`
 

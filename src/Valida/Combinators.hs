@@ -5,6 +5,16 @@ module Valida.Combinators
       -- * Primitive /Unit/ combinators
     , failureIf'
     , failureUnless'
+      -- * Negating 'ValidationRule'
+    , negateRule
+    , negateRule'
+      -- * Combining 'ValidationRule's
+    , andAlso
+    , falseRule
+    , orElse
+    , satisfyAll
+    , satisfyAny
+    , (</>)
       -- * Common derivates of primitive 'NonEmpty' combinators
     , atleastContains
     , maxLengthOf
@@ -23,13 +33,6 @@ module Valida.Combinators
     , mustBe'
     , mustContain'
     , onlyContains'
-      -- * Combining 'ValidationRule's
-    , andAlso
-    , falseRule
-    , orElse
-    , satisfyAll
-    , satisfyAny
-    , (</>)
     ) where
 
 import Control.Applicative (Applicative (liftA2))
@@ -175,6 +178,22 @@ atleastContains' x = failureUnless' (any x)
 -- | Like 'mustContain' but uses /Unit/ as the 'ValidationRule' error type.
 mustContain' :: (Foldable t, Eq a) => a -> ValidationRule () (t a)
 mustContain' x = failureUnless' (elem x)
+
+---------------------------------------------------------------------
+-- Negating 'ValidationRule'
+---------------------------------------------------------------------
+
+-- | Build a rule that succeeds if given rule fails and vice versa.
+negateRule :: e -> ValidationRule e1 a -> ValidationRule e a
+negateRule err (ValidationRule rule) = vrule $ \x -> case rule x of
+    Failure _ -> Success ()
+    Success _ -> Failure err
+
+-- | Like 'negateRule' but uses /Unit/ as the 'ValidationRule' error type.
+negateRule' :: ValidationRule e a -> ValidationRule () a
+negateRule' (ValidationRule rule) = vrule $ \x -> case rule x of
+    Failure _ -> Success ()
+    Success _ -> Failure ()
 
 ---------------------------------------------------------------------
 -- Combining 'ValidationRule's

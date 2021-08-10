@@ -55,7 +55,7 @@ instance Semigroup e => Applicative (Validator e inp) where
     Validator ff <*> Validator v = Validator $ liftA2 (<*>) ff v
 
 {- |
-* '(<>)' applies the inp over both validator functions, and combines the 'Validation' results using '(<>)'.
+* '(<>)' applies input over both validator functions, and combines the 'Validation' results using '(<>)'.
 -}
 instance Semigroup e => Semigroup (Validator e inp a) where
     Validator f <> Validator g = Validator $ f <> g

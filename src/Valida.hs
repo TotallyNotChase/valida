@@ -28,6 +28,8 @@ import Valida.ValidationRule  (ValidationRule (..), vrule)
 import Valida.ValidationUtils (fromEither, toEither)
 import Valida.Validator       (Selector, Validator (..))
 
+infix 5 `select`
+
 {- | Build a validator from a 'ValidationRule' and a 'Selector'.
 
 The 'Validator` first runs given __selector__ on its input to obtain the validation target. Then, it runs the
@@ -72,7 +74,7 @@ infix 6 <?>
 The 'Validator' runs the rule on its input. If validation is successful, the input is put into the 'Validation'
 result.
 
-prop> verify = flip select id
+prop> verify rule = select rule id
 -}
 verify :: ValidationRule e a -> Validator e a a
 verify = (-?>) id

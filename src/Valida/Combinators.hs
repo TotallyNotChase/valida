@@ -44,11 +44,17 @@ import Valida.ValidationRule (ValidationRule (..), vrule)
 -- Primitive 'NonEmpty' combinators
 ---------------------------------------------------------------------
 
--- | Build a rule that /fails/ with given error __if the given rule succeeds__.
+{- | Build a rule that /fails/ with given error __if the given rule succeeds__.
+
+prop> failureIf predc = failureUnless (not . predc)
+-}
 failureIf :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
 failureIf predc = predToRule (not . predc) . singleton
 
--- | Build a rule that /fails/ with given error __unless the given rule succeeds__.
+{- | Build a rule that /fails/ with given error __unless the given rule succeeds__.
+
+prop> failureUnless predc = failureIf (not . predc)
+-}
 failureUnless :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
 failureUnless predc = predToRule predc . singleton
 
@@ -56,11 +62,19 @@ failureUnless predc = predToRule predc . singleton
 -- Primitive /Unit/ combinators
 ---------------------------------------------------------------------
 
--- | Like 'failureIf' but uses /Unit/ as the 'ValidationRule' error type.
+{- | Like 'failureIf' but uses /Unit/ as the 'ValidationRule' error type.
+
+prop> failureIf' predc = failureUnless' (not . predc)
+prop> label (const (err :| [])) (failureIf' predc) = failureIf predc err
+-}
 failureIf' :: (a -> Bool) -> ValidationRule () a
 failureIf' = flip predToRule () . (not .)
 
--- | Like 'failureUnless' but uses /Unit/ as the 'ValidationRule' error type.
+{- | Like 'failureUnless' but uses /Unit/ as the 'ValidationRule' error type.
+
+prop> failureUnless' predc = failureIf' (not . predc)
+prop> label (const (err :| [])) (failureUnless' predc) = failureUnless predc err
+-}
 failureUnless' :: (a -> Bool) -> ValidationRule () a
 failureUnless' = flip predToRule ()
 

@@ -2,11 +2,12 @@ module Main
     ( main
     ) where
 
-import Data.Bool     (bool)
-import Data.Either   (isRight)
-import Data.Foldable (Foldable (fold))
-import Data.Maybe    (isNothing)
-import Data.Monoid   (Sum)
+import Data.Bool          (bool)
+import Data.Either        (isRight)
+import Data.Foldable      (Foldable (fold))
+import Data.List.NonEmpty (NonEmpty)
+import Data.Maybe         (isNothing)
+import Data.Monoid        (Sum)
 
 import           Test.Tasty            (TestTree, defaultMain, testGroup)
 import           Test.Tasty.HUnit      (testCase, (@?=))
@@ -14,7 +15,7 @@ import qualified Test.Tasty.QuickCheck as QC
 import qualified Test.Tasty.SmallCheck as SC
 
 import Valida (Validation (..), ValidationRule, Validator (validate), failureIf, failureIf', failureUnless,
-               failureUnless', falseRule, fromEither, negateRule, negateRule', satisfyAll, satisfyAny, toEither,
+               failureUnless', falseRule, fromEither, label, negateRule, negateRule', satisfyAll, satisfyAny, toEither,
                validation, verify, vrule, (-?>), (</>), (<?>))
 
 import Gen   (NonEmptyLQ, ValidationQ (..))
@@ -171,6 +172,18 @@ testLabel =
     relabelTest inp err err' = validate (verify $ failureUnless (const False) err <?> const err') inp == Failure err'
     errConstructTest :: (Eq a, Eq e) => a -> (a -> e) -> Bool
     errConstructTest inp errF = validate (verify $ failureUnless (const False) () <?> errF) inp == Failure (errF inp)
+
+-- | Test validation errors being combined.
+testErrorPreservation :: [TestTree]
+testErrorPreservation =
+  [ SC.testProperty "(SC) All errors from all validators should be combined upon failure"
+      (helper :: (Bool, ()) -> NonEmpty [Bool] -> Bool)
+  ]
+  where
+    helper :: (Traversable t, Monoid e, Eq e, Eq (t inp)) => inp -> t e -> Bool
+    helper inp errs = validate
+        (traverse (\e -> verify $ label (const e) $ failureUnless' (const False)) errs)
+        inp == Failure (fold errs)
 
 -- | Test the relation between NonEmpty and Unit combinators.
 testNEUnitRelation :: [TestTree]
@@ -459,4 +472,5 @@ main = defaultMain $ testGroup "Test suite"
   , testGroup "Test validation of a collection of Validators" testValidatorCollc
   , testGroup "Test Validation utilities" testValidationUtils
   , testGroup "Test Validator relabeling" testLabel
+  , testGroup "Test Validator error grouping" testErrorPreservation
   ]

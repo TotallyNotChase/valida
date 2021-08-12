@@ -6,11 +6,13 @@ import Data.Bool   (bool)
 import Data.Either (isRight)
 import Data.Maybe  (isNothing)
 
-import Test.Tasty       (TestTree, defaultMain, testGroup)
-import Test.Tasty.HUnit (testCase, (@?=))
+import           Test.Tasty            (TestTree, defaultMain, testGroup)
+import           Test.Tasty.HUnit      (testCase, (@?=))
+import qualified Test.Tasty.QuickCheck as QC
+import qualified Test.Tasty.SmallCheck as SC
 
 import Valida (Validation (..), ValidationRule, Validator (validate), failureIf, failureIf', failureUnless,
-               failureUnless', verify, vrule, (-?>), (<?>))
+               failureUnless', negateRule, negateRule', verify, vrule, (-?>), (<?>))
 
 import Utils (singleton)
 
@@ -122,12 +124,74 @@ testValidatorCollc =
     validatorOf f = verify $ predToVRule () f
     testValidator (validator, inp, expct) = validate validator inp @?= expct inp
 
+-- | Test the relation between NonEmpty and Unit combinators.
+testNEUnitRelation :: [TestTree]
+testNEUnitRelation =
+  [ QC.testProperty "(QC) failureIf p err = label (const (singleton err)) (failureIf' p)"
+      ((\predc inp err -> QC.classify (predc inp) "Significant"
+        $ QC.classify (not $ predc inp) "Trivial"
+        $ validate (verify $ failureIf predc err) inp
+        == validate (verify $ failureIf' predc <?> const (singleton err)) inp
+       ) :: (Char -> Bool) -> Char -> String -> QC.Property
+      )
+  , SC.testProperty "(SC) failureIf p err = label (const (singleton err)) (failureIf' p)"
+      ((\predc inp err -> validate (verify $ failureIf predc err) inp
+        == validate (verify $ failureIf' predc <?> const (singleton err)) inp
+       ) :: (Bool -> Bool) -> Bool -> Int -> Bool
+      )
+  , QC.testProperty "(QC) failureUnless p err = label (const (singleton err)) (failureUnless' p)"
+      ((\predc inp err -> QC.classify (not $ predc inp) "Significant"
+        $ QC.classify (predc inp) "Trivial"
+        $ validate (verify $ failureUnless predc err) inp
+        == validate (verify $ failureUnless' predc <?> const (singleton err)) inp
+       ) :: (Char -> Bool) -> Char -> String -> QC.Property
+      )
+  , SC.testProperty "(SC) failureUnless p err = label (const (singleton err)) (failureUnless' p)"
+      ((\predc inp err -> validate (verify $ failureUnless predc err) inp
+        == validate (verify $ failureUnless' predc <?> const (singleton err)) inp
+       ) :: (Bool -> Bool) -> Bool -> Int -> Bool
+      )
+  ]
+
+-- | Test the relation between failureIf and failureUnless.
+testIfUnlessRelation :: [TestTree]
+testIfUnlessRelation =
+  [ QC.testProperty "(QC) failureIf' p = failureUnless' (not . p)"
+      (helper :: (String -> Bool) -> String -> Bool)
+  , SC.testProperty "(SC) failureIf' p = failureUnless' (not . p)"
+      (helper :: (Bool -> Bool) -> Bool -> Bool)
+  , QC.testProperty "(QC) failureIf p err = negateRule (singleton err) (failureUnless' p)"
+      (negateHelper :: (String -> Bool, String) -> String -> Bool)
+  , SC.testProperty "(SC) failureIf p err = negateRule (singleton err) (failureUnless' p)"
+      (negateHelper :: (Bool -> Bool, Char) -> Bool -> Bool)
+  , QC.testProperty "(QC) failureIf' p = negateRule' (failureUnless' p)"
+      (negateHelper' :: (String -> Bool) -> String -> Bool)
+  , SC.testProperty "(SC) failureIf' p = negateRule' (failureUnless' p)"
+      (negateHelper' :: (Bool -> Bool) -> Bool -> Bool)
+  ]
+  where
+    helper :: Eq a => (a -> Bool) -> a -> Bool
+    helper predc inp = validate (verify $ failureIf' predc) inp
+        == validate (verify $ failureUnless' (not . predc)) inp
+    negateHelper :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
+    negateHelper (predc, err) inp = validate (verify $ failureIf predc err) inp
+        == validate (verify $ negateRule (singleton err) $ failureUnless' predc) inp
+        && validate (verify $ failureUnless predc err) inp
+        == validate (verify $ negateRule (singleton err) $ failureIf' predc) inp
+    negateHelper' :: Eq a => (a -> Bool) -> a -> Bool
+    negateHelper' predc inp = validate (verify $ failureIf' predc) inp
+        == validate (verify $ negateRule' $ failureUnless' predc) inp
+        && validate (verify $ failureUnless' predc) inp
+        == validate (verify $ negateRule' $ failureIf' predc) inp
+
 -- | Test ValidationRule combinators.
 testCombs :: [TestTree]
 testCombs =
   [ testGroup "Test primitive NonEmpty combinators" testPrimCombs
   , testGroup "Test primitive Unit combinators" testPrimCombs'
   , testGroup "Test primitive Unit combinators with labeled error" testPrimCombs''
+  , testGroup "Test relationship between primitive NonEmpty and Unit combinators" testNEUnitRelation
+  , testGroup "Test relationship between primitive 'if' and 'unless' combinators" testIfUnlessRelation
   ]
 
 main :: IO ()

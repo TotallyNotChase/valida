@@ -14,10 +14,10 @@ import qualified Test.Tasty.QuickCheck as QC
 import qualified Test.Tasty.SmallCheck as SC
 
 import Valida (Validation (..), ValidationRule, Validator (validate), failureIf, failureIf', failureUnless,
-               failureUnless', falseRule, negateRule, negateRule', satisfyAll, satisfyAny, verify, vrule, (-?>), (</>),
-               (<?>))
+               failureUnless', falseRule, fromEither, negateRule, negateRule', satisfyAll, satisfyAny, toEither,
+               validation, verify, vrule, (-?>), (</>), (<?>))
 
-import Gen   (NonEmptyLQ)
+import Gen   (NonEmptyLQ, ValidationQ (..))
 import Utils (singleton)
 
 predToVRule :: e -> (a -> Bool) -> ValidationRule e a
@@ -127,6 +127,32 @@ testValidatorCollc =
   where
     validatorOf f = verify $ predToVRule () f
     testValidator (validator, inp, expct) = validate validator inp @?= expct inp
+
+-- | Test utility functions for Validation.
+testValidationUtils :: [TestTree]
+testValidationUtils =
+  [ QC.testProperty "(QC) fromEither . toEither = id"
+      (vIdentityTest :: ValidationQ String Int -> Bool)
+  , SC.testProperty "(SC) fromEither . toEither = id"
+      (vIdentityTest :: ValidationQ Char Char -> Bool)
+  , QC.testProperty "(QC) toEither . fromEither = id"
+      (eIdentityTest :: Either Int Char -> Bool)
+  , SC.testProperty "(SC) toEither . fromEither = id"
+      (eIdentityTest :: Either (Char, Char) Bool -> Bool)
+  , QC.testProperty "(QC) either f g (toEither v) = validation f g v"
+      (vCatamorphTest :: ValidationQ String Int -> (String -> Char) -> (Int -> Char) -> Bool)
+  , QC.testProperty "(QC) validation f g (fromEither v) = either f g v"
+      (eCatamorphTest :: Either String Int -> (String -> Char) -> (Int -> Char) -> Bool)
+  ]
+  where
+    vIdentityTest :: (Eq e, Eq a) => ValidationQ e a -> Bool
+    vIdentityTest (ValidationQ v) = fromEither (toEither v) == v
+    eIdentityTest :: (Eq e, Eq a) => Either e a -> Bool
+    eIdentityTest e = toEither (fromEither e) == e
+    vCatamorphTest :: Eq c => ValidationQ e a -> (e -> c) -> (a -> c) -> Bool
+    vCatamorphTest (ValidationQ v) f g = either f g (toEither v) == validation f g v
+    eCatamorphTest :: Eq c => Either e a -> (e -> c) -> (a -> c) -> Bool
+    eCatamorphTest e f g = validation f g (fromEither e) == either f g e
 
 -- | Test the relation between NonEmpty and Unit combinators.
 testNEUnitRelation :: [TestTree]
@@ -413,4 +439,5 @@ main = defaultMain $ testGroup "Test suite"
   , testGroup "Test negateRule function" testNegateRule
   , testGroup "Test ValidationRule combining functions" testCombMix
   , testGroup "Test validation of a collection of Validators" testValidatorCollc
+  , testGroup "Test Validation utilities" testValidationUtils
   ]

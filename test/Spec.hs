@@ -153,6 +153,20 @@ testNEUnitRelation =
       )
   ]
 
+-- | Test the negateRule function.
+testNegateRule :: [TestTree]
+testNegateRule =
+  [ QC.testProperty "(QC) negateRule . negateRule = id (assuming errors are unchanged)"
+      (helper :: (String -> Bool, Int) -> String -> Bool)
+  , SC.testProperty "(SC) negateRule . negateRule = id (assuming errors are unchanged)"
+      (helper :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
+  ]
+  where
+    helper :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
+    helper (predc, err) x = let rule = predToVRule err predc
+        in validate (verify $ negateRule err . negateRule err $ rule) x == validate (verify rule) x
+        && validate (verify $ negateRule' . negateRule' $ rule) x == validate (verify $ rule <?> const ()) x
+
 -- | Test the relation between failureIf and failureUnless.
 testIfUnlessRelation :: [TestTree]
 testIfUnlessRelation =
@@ -197,5 +211,6 @@ testCombs =
 main :: IO ()
 main = defaultMain $ testGroup "Test suite"
   [ testGroup "Test ValidationRule combinators" testCombs
+  , testGroup "Test negateRule function" testNegateRule
   , testGroup "Test validation of a collection of Validators" testValidatorCollc
   ]

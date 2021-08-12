@@ -2,9 +2,11 @@ module Main
     ( main
     ) where
 
-import Data.Bool   (bool)
-import Data.Either (isRight)
-import Data.Maybe  (isNothing)
+import Data.Bool     (bool)
+import Data.Either   (isRight)
+import Data.Foldable (Foldable (fold))
+import Data.Maybe    (isNothing)
+import Data.Monoid   (Sum)
 
 import           Test.Tasty            (TestTree, defaultMain, testGroup)
 import           Test.Tasty.HUnit      (testCase, (@?=))
@@ -12,8 +14,10 @@ import qualified Test.Tasty.QuickCheck as QC
 import qualified Test.Tasty.SmallCheck as SC
 
 import Valida (Validation (..), ValidationRule, Validator (validate), failureIf, failureIf', failureUnless,
-               failureUnless', negateRule, negateRule', verify, vrule, (-?>), (<?>))
+               failureUnless', falseRule, negateRule, negateRule', satisfyAll, satisfyAny, verify, vrule, (-?>), (</>),
+               (<?>))
 
+import Gen   (NonEmptyLQ)
 import Utils (singleton)
 
 predToVRule :: e -> (a -> Bool) -> ValidationRule e a
@@ -198,6 +202,192 @@ testIfUnlessRelation =
         && validate (verify $ failureUnless' predc) inp
         == validate (verify $ negateRule' $ failureIf' predc) inp
 
+-- | Test orElse properties.
+testOrElse :: [TestTree]
+testOrElse =
+  [ QC.testProperty "(QC) falseRule always fails"
+      (falseRuleTest :: String -> Bool)
+  , SC.testProperty "(SC) falseRule always fails"
+      (falseRuleTest :: Maybe Char -> Bool)
+  , QC.testProperty "(QC) Associativity: rule1 </> (rule2 </> rule3) = (rule1 </> rule2) </> rule3"
+      (asscTest :: (Char -> Bool, String) -> (Char -> Bool, String) -> (Char -> Bool, String) -> Char -> Bool)
+  , SC.testProperty "(SC) Associativity: rule1 </> (rule2 </> rule3) = (rule1 </> rule2) </> rule3"
+      (asscTest :: (Bool -> Bool, [()]) -> (Bool -> Bool, [()]) -> (Bool -> Bool, [()]) -> Bool -> Bool)
+  , QC.testProperty "(QC) Identity: rule </> falseRule = falseRule </> rule = rule"
+      (identTest :: (Int -> Bool, String) -> Int -> Bool)
+  , SC.testProperty "(SC) Identity: rule </> falseRule = falseRule </> rule = rule"
+      (identTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
+  , QC.testProperty "(QC) Annihilator: rule </> mempty = mempty </> rule = mempty"
+      (annihilatorTest :: (Int -> Bool, String) -> Int -> Bool)
+  , SC.testProperty "(SC) Annihilator: rule </> mempty = mempty </> rule = mempty"
+      (annihilatorTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
+  , QC.testProperty "(QC) Complement: rule </> (negateRule e rule) = (negateRule e rule) </> rule = Success"
+      (complmTest :: (Int -> Bool, String, String) -> Int -> Bool)
+  , SC.testProperty "(SC) Complement: rule </> (negateRule e rule) = (negateRule e rule) </> rule = Success"
+      (complmTest :: (Bool -> Bool, [Bool], [Bool]) -> Bool -> Bool)
+  ]
+  where
+    falseRuleTest :: Eq a => a -> Bool
+    falseRuleTest = (==Failure (mempty :: String)) . validate (verify falseRule)
+    asscTest :: (Eq a, Eq e, Semigroup e) => (a -> Bool, e) -> (a -> Bool, e) -> (a -> Bool, e) -> a -> Bool
+    asscTest (f, err1) (g, err2) (h, err3) x =
+        let (rule1, rule2, rule3) = (predToVRule err1 f, predToVRule err2 g, predToVRule err3 h)
+        in validate (verify $ rule1 </> (rule2 </> rule3)) x == validate (verify $ (rule1 </> rule2) </> rule3) x
+    identTest :: (Eq a, Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
+    identTest (f, err) x = let rule = predToVRule err f
+        in validate (verify $ rule </> falseRule) x == validate (verify rule) x
+        && validate (verify $ falseRule </> rule) x == validate (verify rule) x
+    annihilatorTest :: (Eq a, Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
+    annihilatorTest (f, err) x = let rule = predToVRule err f
+        in validate (verify $ rule </> mempty) x == Success x
+        && validate (verify $ mempty </> rule) x == Success x
+    complmTest :: (Eq a, Eq e, Semigroup e) => (a -> Bool, e, e) -> a -> Bool
+    complmTest (f, err, err') x =
+        let rule = predToVRule err f
+        in let complmRule = negateRule err' rule
+        in validate (verify $ rule </> complmRule) x == Success x
+        && validate (verify $ complmRule </> rule) x == Success x
+
+{-# ANN testAndAlso "HLint: ignore Monoid law, right identity" #-}
+{-# ANN testAndAlso "HLint: ignore Monoid law, left identity" #-}
+-- | Test andAlso properties.
+testAndAlso :: [TestTree]
+testAndAlso =
+  [ QC.testProperty "(QC) mempty always succeeds"
+      (memptyTest :: String -> Bool)
+  , SC.testProperty "(SC) mempty always succeeds"
+      (memptyTest :: Maybe Char -> Bool)
+  , QC.testProperty "(QC) Associativity: rule1 <> (rule2 <> rule3) = (rule1 <> rule2) <> rule3"
+      (asscTest :: (Char -> Bool, String) -> (Char -> Bool, String) -> (Char -> Bool, String) -> Char -> Bool)
+  , SC.testProperty "(SC) Associativity: rule1 <> (rule2 <> rule3) = (rule1 <> rule2) <> rule3"
+      (asscTest :: (Bool -> Bool, [()]) -> (Bool -> Bool, [()]) -> (Bool -> Bool, [()]) -> Bool -> Bool)
+  , QC.testProperty "(QC) Identity: rule <> mempty = mempty <> rule = rule"
+      (identTest :: (Int -> Bool, String) -> Int -> Bool)
+  , SC.testProperty "(SC) Identity: rule <> mempty = mempty <> rule = rule"
+      (identTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
+  , QC.testProperty "(QC) Annihilator: rule <> falseRule = falseRule <> rule = falseRule"
+      (annihilatorTest :: (Int -> Bool, String) -> Int -> Bool)
+  , SC.testProperty "(SC) Annihilator: rule <> falseRule = falseRule <> rule = falseRule"
+      (annihilatorTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
+  , QC.testProperty "(QC) Complement: rule <> (negateRule e rule) = (negateRule e rule) <> rule = Failure"
+      (complmTest :: (Int -> Bool, String, String) -> Int -> Bool)
+  , SC.testProperty "(SC) Complement: rule <> (negateRule e rule) = (negateRule e rule) <> rule = Failure"
+      (complmTest :: (Bool -> Bool, [Bool], [Bool]) -> Bool -> Bool)
+  , QC.testProperty "(QC) Idempotence: rule <> rule = rule"
+      (idempTest :: (Int -> Bool, String) -> Int -> Bool)
+  , SC.testProperty "(SC) Idempotence: rule <> rule = rule"
+      (idempTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
+  ]
+  where
+    memptyTest :: Eq a => a -> Bool
+    memptyTest = (==) <$> Success `asTypeOf` const (Failure "") <*> validate (verify mempty)
+    asscTest :: (Eq a, Eq e) => (a -> Bool, e) -> (a -> Bool, e) -> (a -> Bool, e) -> a -> Bool
+    asscTest (f, err1) (g, err2) (h, err3) x =
+        let (rule1, rule2, rule3) = (predToVRule err1 f, predToVRule err2 g, predToVRule err3 h)
+        in validate (verify $ rule1 <> (rule2 <> rule3)) x == validate (verify $ (rule1 <> rule2) <> rule3) x
+    identTest :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
+    identTest (f, err) x = let rule = predToVRule err f
+        in validate (verify $ rule <> mempty) x == validate (verify rule) x
+        && validate (verify $ mempty <> rule) x == validate (verify rule) x
+    annihilatorTest :: (Eq a, Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
+    annihilatorTest (f, err) x = let rule = predToVRule err f
+        in validate (verify $ rule <> falseRule) x == Failure (if f x then mempty else err)
+        && validate (verify $ falseRule <> rule) x == Failure mempty
+    complmTest :: (Eq a, Eq e) => (a -> Bool, e, e) -> a -> Bool
+    complmTest (f, err, err') x =
+        let rule = predToVRule err f
+        in let complmRule = negateRule err' rule
+        in validate (verify $ rule <> complmRule) x == Failure (if f x then err' else err)
+        && validate (verify $ complmRule <> rule) x == Failure (if f x then err' else err)
+    idempTest :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
+    idempTest (f, err) x = let rule = predToVRule err f
+        in validate (verify $ rule <> rule) x == validate (verify rule) x
+
+-- | Test the satisfyAny function.
+testSatisfyAny :: [TestTree]
+testSatisfyAny =
+  [ QC.testProperty "satisfyAny = foldl1 orElse"
+      (leftFold1Test :: NonEmptyLQ (Int -> Bool, Sum Int) -> Int -> Bool)
+  , SC.testProperty "satisfyAny = foldl1 orElse"
+      (leftFold1Test :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
+  , QC.testProperty "satisfyAny = foldr1 orElse"
+      (rightFold1Test :: NonEmptyLQ (Int -> Bool, Sum Int) -> Int -> Bool)
+  , SC.testProperty "satisfyAny = foldr1 orElse"
+      (rightFold1Test :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
+  , QC.testProperty "satisfyAny = foldl orElse falseRule"
+      (leftFoldTest :: NonEmptyLQ (Int -> Bool, Sum Int) -> Int -> Bool)
+  , SC.testProperty "satisfyAny = foldl orElse falseRule"
+      (leftFoldTest :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
+  , QC.testProperty "satisfyAny = foldr orElse falseRule"
+      (rightFoldTest :: NonEmptyLQ (Int -> Bool, Sum Int) -> Int -> Bool)
+  , SC.testProperty "satisfyAny = foldr orElse falseRule"
+      (rightFoldTest :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
+  ]
+  where
+    leftFold1Test :: (Eq a, Eq e, Semigroup e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    leftFold1Test predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
+        in validate (verify $ satisfyAny rules) x
+        == validate (verify $ foldl1 (</>) rules) x
+    rightFold1Test :: (Eq a, Eq e, Semigroup e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    rightFold1Test predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
+        in validate (verify $ satisfyAny rules) x
+        == validate (verify $ foldr1 (</>) rules) x
+    leftFoldTest :: (Eq a, Eq e, Monoid e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    leftFoldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
+        in validate (verify $ satisfyAny rules) x
+        == validate (verify $ foldl (</>) falseRule rules) x
+    rightFoldTest :: (Eq a, Eq e, Monoid e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    rightFoldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
+        in validate (verify $ satisfyAny rules) x
+        == validate (verify $ foldr (</>) falseRule rules) x
+
+{-# ANN testSatisfyAll "HLint: ignore Use mconcat" #-}
+-- | Test the satisfyAll function.
+testSatisfyAll :: [TestTree]
+testSatisfyAll =
+  [ QC.testProperty "satisfyAll = fold"
+      (foldTest :: NonEmptyLQ (Int -> Bool, Sum Int) -> Int -> Bool)
+  , SC.testProperty "satisfyAll = fold"
+      (foldTest :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
+  , QC.testProperty "satisfyAll = foldl1 andAlso"
+      (leftFold1Test :: NonEmptyLQ (Int -> Bool, Sum Int) -> Int -> Bool)
+  , SC.testProperty "satisfyAll = foldl1 andAlso"
+      (leftFold1Test :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
+  , QC.testProperty "satisfyAll = foldr1 andAlso"
+      (rightFold1Test :: NonEmptyLQ (Int -> Bool, Sum Int) -> Int -> Bool)
+  , SC.testProperty "satisfyAll = foldr1 andAlso"
+      (rightFold1Test :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
+  , QC.testProperty "satisfyAll = foldl andAlso mempty"
+      (leftFoldTest :: NonEmptyLQ (Int -> Bool, Sum Int) -> Int -> Bool)
+  , SC.testProperty "satisfyAll = foldl andAlso mempty"
+      (leftFoldTest :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
+  , QC.testProperty "satisfyAll = foldr andAlso mempty"
+      (rightFoldTest :: NonEmptyLQ (Int -> Bool, Sum Int) -> Int -> Bool)
+  , SC.testProperty "satisfyAll = foldr andAlso mempty"
+      (rightFoldTest :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
+  ]
+  where
+    foldTest :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    foldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
+        in validate (verify $ satisfyAll rules) x
+        == validate (verify $ fold rules) x
+    leftFold1Test :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    leftFold1Test predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
+        in validate (verify $ satisfyAll rules) x
+        == validate (verify $ foldl1 (<>) rules) x
+    rightFold1Test :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    rightFold1Test predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
+        in validate (verify $ satisfyAll rules) x
+        == validate (verify $ foldr1 (<>) rules) x
+    leftFoldTest :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    leftFoldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
+        in validate (verify $ satisfyAll rules) x
+        == validate (verify $ foldl (<>) mempty rules) x
+    rightFoldTest :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    rightFoldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
+        in validate (verify $ satisfyAll rules) x
+        == validate (verify $ foldr (<>) mempty rules) x
+
 -- | Test ValidationRule combinators.
 testCombs :: [TestTree]
 testCombs =
@@ -208,9 +398,19 @@ testCombs =
   , testGroup "Test relationship between primitive 'if' and 'unless' combinators" testIfUnlessRelation
   ]
 
+-- | Test functions that combine ValidationRules.
+testCombMix :: [TestTree]
+testCombMix =
+  [ testGroup "Test `orElse` function" testOrElse
+  , testGroup "Test `andAlso` function" testAndAlso
+  , testGroup "Test `satisfyAny` function" testSatisfyAny
+  , testGroup "Test `satisfyAll` function" testSatisfyAll
+  ]
+
 main :: IO ()
 main = defaultMain $ testGroup "Test suite"
   [ testGroup "Test ValidationRule combinators" testCombs
   , testGroup "Test negateRule function" testNegateRule
+  , testGroup "Test ValidationRule combining functions" testCombMix
   , testGroup "Test validation of a collection of Validators" testValidatorCollc
   ]

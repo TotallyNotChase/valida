@@ -9,10 +9,13 @@ import Data.Maybe  (isNothing)
 import Test.Tasty       (TestTree, defaultMain, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 
-import Valida (Validation (..), Validator (validate), failureIf, failureIf', failureUnless,
+import Valida (Validation (..), ValidationRule, Validator (validate), failureIf, failureIf', failureUnless,
                failureUnless', verify, vrule, (-?>), (<?>))
 
 import Utils (singleton)
+
+predToVRule :: e -> (a -> Bool) -> ValidationRule e a
+predToVRule err f = vrule $ bool (Failure err) (Success ()) . f
 
 -- | Test the primitive non empty combinators.
 testPrimCombs :: [TestTree]
@@ -85,6 +88,7 @@ testPrimCombs'' =
   where
     testValidator (rule, err, inp, expct) = validate (verify $ rule <?> const err) inp @?= expct err
 
+-- | Test multiple validators combined.
 testValidatorCollc :: [TestTree]
 testValidatorCollc =
   [ testCase "Applicative validation fails if at least one validator fails" $ do
@@ -109,13 +113,13 @@ testValidatorCollc =
         , [1, 0, 0, 0, 0, 0, 0, 3, 2, 0] :: [Int]
         , Success
         )
-      testValidator ((,) <$> fst -?> failureUnless' (>7) <*> snd -?> failureUnless' (<9)
-        , (8, 7) :: (Int, Int)
+      testValidator ((,) <$> fst -?> failureUnless' (>7) <*> snd -?> failureUnless' (<5)
+        , (8, 3) :: (Int, Int)
         , Success
         )
   ]
   where
-    validatorOf f = verify (vrule $ bool (Failure ()) (Success ()) . f)
+    validatorOf f = verify $ predToVRule () f
     testValidator (validator, inp, expct) = validate validator inp @?= expct inp
 
 -- | Test ValidationRule combinators.

@@ -154,6 +154,24 @@ testValidationUtils =
     eCatamorphTest :: Eq c => Either e a -> (e -> c) -> (a -> c) -> Bool
     eCatamorphTest e f g = validation f g (fromEither e) == either f g e
 
+-- | Test the label function.
+testLabel :: [TestTree]
+testLabel =
+  [ QC.testProperty "(QC) Validator should yield relabeled error upon failure"
+      (relabelTest :: Int -> Char -> String -> Bool)
+  , SC.testProperty "(SC) Validator should yield relabeled error upon failure"
+      (relabelTest :: [Int] -> Bool -> Char -> Bool)
+  , QC.testProperty "(QC) Error generator function during relabeling should have access to input"
+      (errConstructTest :: [Int] -> ([Int] -> String) -> Bool)
+  , SC.testProperty "(SC) Error generator function during relabeling should have access to input"
+      (errConstructTest :: Bool -> (Bool -> Char) -> Bool)
+  ]
+  where
+    relabelTest :: (Eq a, Eq e) => a -> e1 -> e -> Bool
+    relabelTest inp err err' = validate (verify $ failureUnless (const False) err <?> const err') inp == Failure err'
+    errConstructTest :: (Eq a, Eq e) => a -> (a -> e) -> Bool
+    errConstructTest inp errF = validate (verify $ failureUnless (const False) () <?> errF) inp == Failure (errF inp)
+
 -- | Test the relation between NonEmpty and Unit combinators.
 testNEUnitRelation :: [TestTree]
 testNEUnitRelation =
@@ -440,4 +458,5 @@ main = defaultMain $ testGroup "Test suite"
   , testGroup "Test ValidationRule combining functions" testCombMix
   , testGroup "Test validation of a collection of Validators" testValidatorCollc
   , testGroup "Test Validation utilities" testValidationUtils
+  , testGroup "Test Validator relabeling" testLabel
   ]

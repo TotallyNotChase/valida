@@ -61,4 +61,4 @@ In case of 'Failure e', apply the first function to e; in case of 'Success a', a
 -}
 validation :: (e -> c) -> (a -> c) -> Validation e a -> c
 validation ef _ (Failure e) = ef e
-validation _ af (Success e) = af e
+validation _ af (Success a) = af a

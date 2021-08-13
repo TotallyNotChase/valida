@@ -33,7 +33,7 @@ instance Semigroup (ValidationRule e a) where
 * 'mempty' is a 'ValidationRule' that always succeeds.
 -}
 instance Monoid (ValidationRule e a) where
-    mempty = ValidationRule $ \_ -> Success ()
+    mempty = ValidationRule $ const $ Success ()
 
 -- | Low level function to manually build a `ValidationRule`. You should use the combinators instead.
 vrule :: (a -> Validation e ()) -> ValidationRule e a

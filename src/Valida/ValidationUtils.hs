@@ -1,6 +1,16 @@
 module Valida.ValidationUtils
-    ( fromEither
+    ( -- * Transformations between 'Either' and 'Validation'
+      fromEither
     , toEither
+      -- * Utilities for working with 'Validation'
+    , failures
+    , fromFailure
+    , fromSuccess
+    , isFailure
+    , isSuccess
+    , partitionValidations
+    , successes
+    , validation
     ) where
 
 import Valida.Validation (Validation (..), validation)
@@ -24,3 +34,42 @@ Given, __Either e a__-
 -}
 fromEither :: Either e a -> Validation e a
 fromEither = either Failure Success
+
+-- | Return True if the given value is a Failure-value, False otherwise.
+isFailure :: Validation e a -> Bool
+isFailure (Failure _) = True
+isFailure (Success _) = False
+
+-- | Return True if the given value is a Success-value, False otherwise.
+isSuccess :: Validation e a -> Bool
+isSuccess (Success _) = True
+isSuccess (Failure _) = False
+
+-- | Return the contents of a Failure-value or a default value otherwise.
+fromFailure :: e -> Validation e a -> e
+fromFailure _ (Failure e) = e
+fromFailure e _           = e
+
+-- | Return the contents of a Success-value or a default value otherwise.
+fromSuccess :: a -> Validation e a -> a
+fromSuccess _ (Success a) = a
+fromSuccess a _           = a
+
+-- | Extracts from a list of 'Validation' all the Failure elements, in order.
+failures :: [Validation e a] -> [e]
+failures xs = [e | Failure e <- xs]
+
+-- | Extracts from a list of 'Validation' all the Success elements, in order.
+successes :: [Validation e a] -> [a]
+successes xs = [a | Success a <- xs]
+
+{- | Partitions a list of Either into two lists.
+
+All the Left elements are extracted, in order, to the first component of the output.
+Similarly the Right elements are extracted to the second component of the output.
+-}
+partitionValidations :: [Validation e a] -> ([e], [a])
+partitionValidations = foldr (validation failure success) ([],[])
+ where
+  failure a ~(l, r) = (a:l, r)
+  success a ~(l, r) = (l, a:r)

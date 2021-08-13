@@ -1,21 +1,19 @@
 module Valida
     ( Selector
-      -- | Re-exports of "Valida.Combinators".
+      -- | Re-exports of "Valida.Combinators"
     , module Valida.Combinators
-      -- * Primary data types.
+      -- | Re-exports of "Valida.ValidationUtils"
+    , module Valida.ValidationUtils
+      -- * Primary data types
     , Validation (..)
     , ValidationRule
     , Validator (validate)
-      -- * Functions for building Valida data types.
+      -- * Functions for building Valida data types
     , select
     , verify
     , vrule
     , (-?>)
-      -- * Utility functions for Valida data types.
-    , fromEither
-    , toEither
-    , validation
-      -- * Reassigning corresponding error to 'ValidationRule'.
+      -- * Reassigning corresponding error to 'ValidationRule'
     , label
     , (<?>)
     ) where
@@ -23,9 +21,9 @@ module Valida
 import Control.Applicative (Applicative (liftA2))
 
 import Valida.Combinators
-import Valida.Validation      (Validation (..), validation)
+import Valida.Validation      (Validation (..))
 import Valida.ValidationRule  (ValidationRule (..), vrule)
-import Valida.ValidationUtils (fromEither, toEither)
+import Valida.ValidationUtils
 import Valida.Validator       (Selector, Validator (..))
 
 infix 5 `select`
@@ -60,7 +58,7 @@ within 'NonEmpty' upon failure. You can use 'label' to override this return valu
 -}
 label :: (a -> e) -> ValidationRule x a -> ValidationRule e a
 label errF (ValidationRule rule) = vrule $ \x -> case rule x of
-    Failure _ -> Failure (errF x)
+    Failure _ -> Failure $ errF x
     _         -> Success ()
 
 -- | A synonym for 'label' with its arguments flipped.

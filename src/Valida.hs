@@ -53,7 +53,7 @@ An "error generator" is a function that takes the validation target, that has fa
 representing error.
 
 Many combinators, like 'failureIf' and 'failureUnless', simply return the given error value
-within 'NonEmpty' upon failure. You can use 'label' to override this return value.
+within /NonEmpty/ upon failure. You can use 'label' to override this return value.
 -}
 label :: (a -> e) -> ValidationRule x a -> ValidationRule e a
 label errF (ValidationRule rule) = vrule $ \x -> case rule x of

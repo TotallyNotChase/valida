@@ -1,9 +1,5 @@
 module Valida
     ( Selector
-      -- | Re-exports of "Valida.Combinators"
-    , module Valida.Combinators
-      -- | Re-exports of "Valida.ValidationUtils"
-    , module Valida.ValidationUtils
       -- * Primary data types
     , Validation (..)
     , ValidationRule
@@ -16,6 +12,9 @@ module Valida
       -- * Reassigning corresponding error to 'ValidationRule'
     , label
     , (<?>)
+      -- | Re-exports of "Valida.Combinators"
+    , module Valida.Combinators
+    , module Valida.ValidationUtils
     ) where
 
 import Control.Applicative (Applicative (liftA2))

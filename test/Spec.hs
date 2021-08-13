@@ -15,8 +15,8 @@ import qualified Test.Tasty.QuickCheck as QC
 import qualified Test.Tasty.SmallCheck as SC
 
 import Valida (Validation (..), ValidationRule, Validator (validate), failureIf, failureIf', failureUnless,
-               failureUnless', falseRule, fromEither, label, negateRule, negateRule', satisfyAll, satisfyAny, toEither,
-               validation, verify, vrule, (-?>), (</>), (<?>))
+               failureUnless', failures, falseRule, fromEither, label, negateRule, negateRule', partitionValidations,
+               satisfyAll, satisfyAny, successes, toEither, validation, verify, vrule, (-?>), (</>), (<?>))
 
 import Gen   (NonEmptyLQ, ValidationQ (..))
 import Utils (singleton)
@@ -149,6 +149,10 @@ testValidationUtils =
       (vCatamorphTest :: ValidationQ String Int -> (String -> Char) -> (Int -> Char) -> Bool)
   , QC.testProperty "(QC) validation f g (fromEither v) = either f g v"
       (eCatamorphTest :: Either String Int -> (String -> Char) -> (Int -> Char) -> Bool)
+  , QC.testProperty "(QC) partitionValidations xs = (failures xs, successes xs)"
+      (partitionTest :: [ValidationQ Int Char] -> Bool)
+  , SC.testProperty "(SC) partitionValidations xs = (failures xs, successes xs)"
+      (partitionTest :: [ValidationQ Bool (Maybe Char)] -> Bool)
   ]
   where
     vIdentityTest :: (Eq e, Eq a) => ValidationQ e a -> Bool
@@ -159,6 +163,9 @@ testValidationUtils =
     vCatamorphTest (ValidationQ v) f g = either f g (toEither v) == validation f g v
     eCatamorphTest :: Eq c => Either e a -> (e -> c) -> (a -> c) -> Bool
     eCatamorphTest e f g = validation f g (fromEither e) == either f g e
+    partitionTest :: (Eq e, Eq a) => [ValidationQ e a] -> Bool
+    partitionTest vqs = let xs = [v | ValidationQ v <- vqs]
+        in partitionValidations xs == (failures xs, successes xs)
 
 -- | Test the label function.
 testLabel :: [TestTree]

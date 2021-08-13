@@ -47,6 +47,7 @@ test-suite valida-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Gen
       Utils
       Paths_valida
   hs-source-dirs:
@@ -57,6 +58,7 @@ test-suite valida-test
     , smallcheck
     , tasty
     , tasty-hunit
+    , tasty-quickcheck
     , tasty-smallcheck
     , valida
   default-language: Haskell2010

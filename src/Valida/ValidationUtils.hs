@@ -67,6 +67,8 @@ successes xs = [a | Success a <- xs]
 
 All the Left elements are extracted, in order, to the first component of the output.
 Similarly the Right elements are extracted to the second component of the output.
+
+prop> partitionValidations xs = (failures xs, successes xs)
 -}
 partitionValidations :: [Validation e a] -> ([e], [a])
 partitionValidations = foldr (validation failure success) ([],[])

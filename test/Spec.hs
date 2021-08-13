@@ -21,8 +21,13 @@ import Valida (Validation (..), ValidationRule, Validator (validate), failureIf,
 import Gen   (NonEmptyLQ, ValidationQ (..))
 import Utils (singleton)
 
+-- | Helper to directly make a ValidationRule out of an error and predicate function.
 predToVRule :: e -> (a -> Bool) -> ValidationRule e a
 predToVRule err f = vrule $ bool (Failure err) (Success ()) . f
+
+-- | Helper to build a validator and run it on input at once.
+validatify :: ValidationRule e a -> a -> Validation e a
+validatify = validate . verify
 
 -- | Test the primitive non empty combinators.
 testPrimCombs :: [TestTree]
@@ -49,7 +54,7 @@ testPrimCombs =
       testValidator (failureUnless or, "Has True", [False, False, False], const . Failure . singleton)
   ]
   where
-    testValidator ~(rule, err, inp, expct) = validate (verify $ rule err) inp @?= expct err inp
+    testValidator ~(rule, err, inp, expct) = rule err `validatify` inp @?= expct err inp
 
 -- | Test the primitive unit combinators.
 testPrimCombs' :: [TestTree]
@@ -76,7 +81,7 @@ testPrimCombs' =
       testValidator (failureUnless' or, [False, False, False], const $ Failure ())
   ]
   where
-    testValidator ~(rule, inp, expct) = validate (verify rule) inp @?= expct inp
+    testValidator ~(rule, inp, expct) = rule `validatify` inp @?= expct inp
 
 -- | Test the primitive unit combinators with labeled errors.
 testPrimCombs'' :: [TestTree]
@@ -93,7 +98,7 @@ testPrimCombs'' =
       testValidator (failureUnless' or, "Has True", [False, False, False], Failure)
   ]
   where
-    testValidator ~(rule, err, inp, expct) = validate (verify $ rule <?> const err) inp @?= expct err
+    testValidator ~(rule, err, inp, expct) = (rule <?> const err) `validatify` inp @?= expct err
 
 -- | Test multiple validators combined.
 testValidatorCollc :: [TestTree]
@@ -169,9 +174,9 @@ testLabel =
   ]
   where
     relabelTest :: (Eq a, Eq e) => a -> e1 -> e -> Bool
-    relabelTest inp err err' = validate (verify $ failureUnless (const False) err <?> const err') inp == Failure err'
+    relabelTest inp err err' = (failureUnless (const False) err <?> const err') `validatify` inp == Failure err'
     errConstructTest :: (Eq a, Eq e) => a -> (a -> e) -> Bool
-    errConstructTest inp errF = validate (verify $ failureUnless (const False) () <?> errF) inp == Failure (errF inp)
+    errConstructTest inp errF = (failureUnless (const False) () <?> errF) `validatify` inp == Failure (errF inp)
 
 -- | Test validation errors being combined.
 testErrorPreservation :: [TestTree]
@@ -191,25 +196,25 @@ testNEUnitRelation =
   [ QC.testProperty "(QC) failureIf p err = label (const (singleton err)) (failureIf' p)"
       ((\predc inp err -> QC.classify (predc inp) "Significant"
         $ QC.classify (not $ predc inp) "Trivial"
-        $ validate (verify $ failureIf predc err) inp
-        == validate (verify $ failureIf' predc <?> const (singleton err)) inp
+        $ failureIf predc err `validatify` inp
+        == (failureIf' predc <?> const (singleton err)) `validatify` inp
        ) :: (Char -> Bool) -> Char -> String -> QC.Property
       )
   , SC.testProperty "(SC) failureIf p err = label (const (singleton err)) (failureIf' p)"
-      ((\predc inp err -> validate (verify $ failureIf predc err) inp
-        == validate (verify $ failureIf' predc <?> const (singleton err)) inp
+      ((\predc inp err -> failureIf predc err `validatify` inp
+        == (failureIf' predc <?> const (singleton err)) `validatify` inp
        ) :: (Bool -> Bool) -> Bool -> Int -> Bool
       )
   , QC.testProperty "(QC) failureUnless p err = label (const (singleton err)) (failureUnless' p)"
       ((\predc inp err -> QC.classify (not $ predc inp) "Significant"
         $ QC.classify (predc inp) "Trivial"
-        $ validate (verify $ failureUnless predc err) inp
-        == validate (verify $ failureUnless' predc <?> const (singleton err)) inp
+        $ failureUnless predc err `validatify` inp
+        == (failureUnless' predc <?> const (singleton err)) `validatify` inp
        ) :: (Char -> Bool) -> Char -> String -> QC.Property
       )
   , SC.testProperty "(SC) failureUnless p err = label (const (singleton err)) (failureUnless' p)"
-      ((\predc inp err -> validate (verify $ failureUnless predc err) inp
-        == validate (verify $ failureUnless' predc <?> const (singleton err)) inp
+      ((\predc inp err -> failureUnless predc err `validatify` inp
+        == (failureUnless' predc <?> const (singleton err)) `validatify` inp
        ) :: (Bool -> Bool) -> Bool -> Int -> Bool
       )
   ]
@@ -225,8 +230,8 @@ testNegateRule =
   where
     helper :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
     helper ~(predc, err) x = let rule = predToVRule err predc
-        in validate (verify $ negateRule err . negateRule err $ rule) x == validate (verify rule) x
-        && validate (verify $ negateRule' . negateRule' $ rule) x == validate (verify $ rule <?> const ()) x
+        in negateRule err (negateRule err rule) `validatify` x == rule `validatify` x
+        && negateRule' (negateRule' rule) `validatify` x == (rule <?> const ()) `validatify` x
 
 -- | Test the relation between failureIf and failureUnless.
 testIfUnlessRelation :: [TestTree]
@@ -246,18 +251,18 @@ testIfUnlessRelation =
   ]
   where
     helper :: Eq a => (a -> Bool) -> a -> Bool
-    helper predc inp = validate (verify $ failureIf' predc) inp
-        == validate (verify $ failureUnless' (not . predc)) inp
+    helper predc inp = failureIf' predc `validatify` inp
+        == failureUnless' (not . predc) `validatify` inp
     negateHelper :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
-    negateHelper ~(predc, err) inp = validate (verify $ failureIf predc err) inp
-        == validate (verify $ negateRule (singleton err) $ failureUnless' predc) inp
-        && validate (verify $ failureUnless predc err) inp
-        == validate (verify $ negateRule (singleton err) $ failureIf' predc) inp
+    negateHelper ~(predc, err) inp = failureIf predc err `validatify` inp
+        == negateRule (singleton err) (failureUnless' predc) `validatify` inp
+        && failureUnless predc err `validatify` inp
+        == negateRule (singleton err) (failureIf' predc) `validatify` inp
     negateHelper' :: Eq a => (a -> Bool) -> a -> Bool
-    negateHelper' predc inp = validate (verify $ failureIf' predc) inp
-        == validate (verify $ negateRule' $ failureUnless' predc) inp
-        && validate (verify $ failureUnless' predc) inp
-        == validate (verify $ negateRule' $ failureIf' predc) inp
+    negateHelper' predc inp = failureIf' predc `validatify` inp
+        == negateRule' (failureUnless' predc) `validatify` inp
+        && failureUnless' predc `validatify` inp
+        == negateRule' (failureIf' predc) `validatify` inp
 
 -- | Test orElse properties.
 testOrElse :: [TestTree]
@@ -285,25 +290,25 @@ testOrElse =
   ]
   where
     falseRuleTest :: Eq a => a -> Bool
-    falseRuleTest = (==Failure (mempty :: String)) . validate (verify falseRule)
+    falseRuleTest = (==Failure (mempty :: String)) . validatify falseRule
     asscTest :: (Eq a, Eq e, Semigroup e) => (a -> Bool, e) -> (a -> Bool, e) -> (a -> Bool, e) -> a -> Bool
     asscTest ~(f, err1) ~(g, err2) ~(h, err3) x =
         let ~(rule1, rule2, rule3) = (predToVRule err1 f, predToVRule err2 g, predToVRule err3 h)
-        in validate (verify $ rule1 </> (rule2 </> rule3)) x == validate (verify $ (rule1 </> rule2) </> rule3) x
+        in  (rule1 </> (rule2 </> rule3)) `validatify` x == ((rule1 </> rule2) </> rule3) `validatify` x
     identTest :: (Eq a, Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
     identTest ~(f, err) x = let rule = predToVRule err f
-        in validate (verify $ rule </> falseRule) x == validate (verify rule) x
-        && validate (verify $ falseRule </> rule) x == validate (verify rule) x
+        in (rule </> falseRule) `validatify` x == rule `validatify` x
+        && (falseRule </> rule) `validatify` x == rule `validatify` x
     annihilatorTest :: (Eq a, Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
     annihilatorTest ~(f, err) x = let rule = predToVRule err f
-        in validate (verify $ rule </> mempty) x == Success x
-        && validate (verify $ mempty </> rule) x == Success x
+        in (rule </> mempty) `validatify` x == Success x
+        && (mempty </> rule) `validatify` x == Success x
     complmTest :: (Eq a, Eq e, Semigroup e) => (a -> Bool, e, e) -> a -> Bool
     complmTest ~(f, err, err') x =
         let rule = predToVRule err f
         in let complmRule = negateRule err' rule
-        in validate (verify $ rule </> complmRule) x == Success x
-        && validate (verify $ complmRule </> rule) x == Success x
+        in (rule </> complmRule) `validatify` x == Success x
+        && (complmRule </> rule) `validatify` x == Success x
 
 {-# ANN testAndAlso "HLint: ignore Monoid law, right identity" #-}
 {-# ANN testAndAlso "HLint: ignore Monoid law, left identity" #-}
@@ -337,28 +342,28 @@ testAndAlso =
   ]
   where
     memptyTest :: Eq a => a -> Bool
-    memptyTest = (==) <$> Success `asTypeOf` const (Failure "") <*> validate (verify mempty)
+    memptyTest = (==) <$> Success `asTypeOf` const (Failure "") <*> validatify mempty
     asscTest :: (Eq a, Eq e) => (a -> Bool, e) -> (a -> Bool, e) -> (a -> Bool, e) -> a -> Bool
     asscTest ~(f, err1) (g, err2) (h, err3) x =
         let ~(rule1, rule2, rule3) = (predToVRule err1 f, predToVRule err2 g, predToVRule err3 h)
-        in validate (verify $ rule1 <> (rule2 <> rule3)) x == validate (verify $ (rule1 <> rule2) <> rule3) x
+        in (rule1 <> (rule2 <> rule3)) `validatify` x == ((rule1 <> rule2) <> rule3) `validatify` x
     identTest :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
     identTest ~(f, err) x = let rule = predToVRule err f
-        in validate (verify $ rule <> mempty) x == validate (verify rule) x
-        && validate (verify $ mempty <> rule) x == validate (verify rule) x
+        in (rule <> mempty) `validatify` x == rule `validatify` x
+        && (mempty <> rule) `validatify` x == rule `validatify` x
     annihilatorTest :: (Eq a, Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
     annihilatorTest ~(f, err) x = let rule = predToVRule err f
-        in validate (verify $ rule <> falseRule) x == Failure (if f x then mempty else err)
-        && validate (verify $ falseRule <> rule) x == Failure mempty
+        in (rule <> falseRule) `validatify` x == Failure (if f x then mempty else err)
+        && (falseRule <> rule) `validatify` x == Failure mempty
     complmTest :: (Eq a, Eq e) => (a -> Bool, e, e) -> a -> Bool
     complmTest ~(f, err, err') x =
         let rule = predToVRule err f
         in let complmRule = negateRule err' rule
-        in validate (verify $ rule <> complmRule) x == Failure (if f x then err' else err)
-        && validate (verify $ complmRule <> rule) x == Failure (if f x then err' else err)
+        in (rule <> complmRule) `validatify` x == Failure (if f x then err' else err)
+        && (complmRule <> rule) `validatify` x == Failure (if f x then err' else err)
     idempTest :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
     idempTest ~(f, err) x = let rule = predToVRule err f
-        in validate (verify $ rule <> rule) x == validate (verify rule) x
+        in (rule <> rule) `validatify` x == rule `validatify` x
 
 -- | Test the satisfyAny function.
 testSatisfyAny :: [TestTree]
@@ -383,20 +388,20 @@ testSatisfyAny =
   where
     leftFold1Test :: (Eq a, Eq e, Semigroup e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
     leftFold1Test predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
-        in validate (verify $ satisfyAny rules) x
-        == validate (verify $ foldl1 (</>) rules) x
+        in satisfyAny rules `validatify` x
+        == foldl1 (</>) rules `validatify` x
     rightFold1Test :: (Eq a, Eq e, Semigroup e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
     rightFold1Test predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
-        in validate (verify $ satisfyAny rules) x
-        == validate (verify $ foldr1 (</>) rules) x
+        in satisfyAny rules `validatify` x
+        == foldr1 (</>) rules `validatify` x
     leftFoldTest :: (Eq a, Eq e, Monoid e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
     leftFoldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
-        in validate (verify $ satisfyAny rules) x
-        == validate (verify $ foldl (</>) falseRule rules) x
+        in satisfyAny rules `validatify` x
+        == foldl (</>) falseRule rules `validatify` x
     rightFoldTest :: (Eq a, Eq e, Monoid e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
     rightFoldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
-        in validate (verify $ satisfyAny rules) x
-        == validate (verify $ foldr (</>) falseRule rules) x
+        in satisfyAny rules `validatify` x
+        == foldr (</>) falseRule rules `validatify` x
 
 {-# ANN testSatisfyAll "HLint: ignore Use mconcat" #-}
 -- | Test the satisfyAll function.
@@ -426,24 +431,24 @@ testSatisfyAll =
   where
     foldTest :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
     foldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
-        in validate (verify $ satisfyAll rules) x
-        == validate (verify $ fold rules) x
+        in satisfyAll rules `validatify` x
+        == fold rules `validatify` x
     leftFold1Test :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
     leftFold1Test predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
-        in validate (verify $ satisfyAll rules) x
-        == validate (verify $ foldl1 (<>) rules) x
+        in satisfyAll rules `validatify` x
+        == foldl1 (<>) rules `validatify` x
     rightFold1Test :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
     rightFold1Test predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
-        in validate (verify $ satisfyAll rules) x
-        == validate (verify $ foldr1 (<>) rules) x
+        in satisfyAll rules `validatify` x
+        == foldr1 (<>) rules `validatify` x
     leftFoldTest :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
     leftFoldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
-        in validate (verify $ satisfyAll rules) x
-        == validate (verify $ foldl (<>) mempty rules) x
+        in satisfyAll rules `validatify` x
+        == foldl (<>) mempty rules `validatify` x
     rightFoldTest :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
     rightFoldTest predcs x = let rules = (\(f, err) -> predToVRule err f) <$> predcs
-        in validate (verify $ satisfyAll rules) x
-        == validate (verify $ foldr (<>) mempty rules) x
+        in satisfyAll rules `validatify` x
+        == foldr (<>) mempty rules `validatify` x
 
 -- | Test ValidationRule combinators.
 testCombs :: [TestTree]

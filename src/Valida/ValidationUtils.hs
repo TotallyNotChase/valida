@@ -38,12 +38,12 @@ fromEither = either Failure Success
 -- | Return True if the given value is a Failure-value, False otherwise.
 isFailure :: Validation e a -> Bool
 isFailure (Failure _) = True
-isFailure (Success _) = False
+isFailure _           = False
 
 -- | Return True if the given value is a Success-value, False otherwise.
 isSuccess :: Validation e a -> Bool
 isSuccess (Success _) = True
-isSuccess (Failure _) = False
+isSuccess _           = False
 
 -- | Return the contents of a Failure-value or a default value otherwise.
 fromFailure :: e -> Validation e a -> e

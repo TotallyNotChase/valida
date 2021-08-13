@@ -23,6 +23,7 @@ module Valida.Combinators
     , minValueOf
     , mustBe
     , mustContain
+    , notEmpty
     , onlyContains
       -- * Common derivates of primitive /Unit/ combinators
     , atleastContains'
@@ -32,6 +33,7 @@ module Valida.Combinators
     , minValueOf'
     , mustBe'
     , mustContain'
+    , notEmpty'
     , onlyContains'
     ) where
 
@@ -106,6 +108,14 @@ prop> maxLengthOf n = failureUnless ((<=n) . length)
 maxLengthOf :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 maxLengthOf n = failureUnless ((<=n) . length)
 
+{- | Build a maximum length rule.
+
+prop> notEmpty = minLengthOf 1
+prop> notEmpty = failureIf null
+-}
+notEmpty :: Foldable t => e -> ValidationRule (NonEmpty e) (t a)
+notEmpty = failureIf null
+
 {- | Build a minimum value rule.
 
 prop> minValueOf x = failureUnless (>=x)
@@ -158,6 +168,10 @@ minLengthOf' n = failureUnless' ((>=n) . length)
 -- | Like 'maxLengthOf' but uses /Unit/ as the 'ValidationRule' error type.
 maxLengthOf' :: Foldable t => Int -> ValidationRule () (t a)
 maxLengthOf' n = failureUnless' ((<=n) . length)
+
+-- | Like 'notEmpty' but uses /Unit/ as the 'ValidationRule' error type.
+notEmpty' :: Foldable t => e -> ValidationRule (NonEmpty e) (t a)
+notEmpty' = failureIf null
 
 -- | Like 'minValueOf' but uses /Unit/ as the 'ValidationRule' error type.
 minValueOf' :: Ord a => a -> ValidationRule () a

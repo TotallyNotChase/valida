@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
+
 module Valida.Validation
     ( Validation (..)
     , validation
@@ -6,6 +9,9 @@ module Valida.Validation
 import Data.Bifoldable    (Bifoldable (bifoldMap))
 import Data.Bifunctor     (Bifunctor (bimap))
 import Data.Bitraversable (Bitraversable)
+import Data.Data          (Data)
+import Data.Typeable      (Typeable)
+import GHC.Generics       (Generic)
 
 -- | Like 'Either', but accumulates failures upon applicative composition.
 data Validation e a
@@ -13,7 +19,7 @@ data Validation e a
   = Failure e
   -- | Represents a successful validation with the validated value.
   | Success a
-  deriving (Eq, Ord, Read, Show)
+  deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 {- |
 * 'fmap' maps given function over a 'Success' value, does nothing on 'Failure' value.

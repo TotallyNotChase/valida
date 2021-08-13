@@ -1,9 +1,13 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Valida.Validator
     ( Selector
     , Validator (..)
     ) where
 
 import Control.Applicative (Applicative (liftA2))
+import Data.Typeable       (Typeable)
+import GHC.Generics        (Generic)
 
 import Valida.Validation (Validation (..))
 
@@ -11,7 +15,7 @@ import Valida.Validation (Validation (..))
 type Selector a b = a -> b
 
 -- | An applicative validator. Validates a predicate on an input when run and returns the 'Validation' result.
-newtype Validator e inp a = Validator { validate :: inp -> Validation e a }
+newtype Validator e inp a = Validator { validate :: inp -> Validation e a } deriving (Typeable, Generic)
 
 {- |
 * 'fmap' maps given function over the 'Validation' result by re-using 'fmap' on it.

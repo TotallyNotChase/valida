@@ -1,7 +1,12 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Valida.ValidationRule
     ( ValidationRule (..)
     , vrule
     ) where
+
+import Data.Typeable (Typeable)
+import GHC.Generics  (Generic)
 
 import Valida.Validation (Validation (..))
 
@@ -17,6 +22,7 @@ newtype ValidationRule e a
   = ValidationRule
   -- ^ The validation predicate.
     (a -> Validation e ())
+  deriving (Typeable, Generic)
 
 {- |
 * '(<>)' creates a new `ValidationRule` that only succeeds when both given rule succeed.

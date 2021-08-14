@@ -43,6 +43,18 @@ library
       base >=4.7 && <5
   default-language: Haskell2010
 
+executable valida-examples-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_valida
+  hs-source-dirs:
+      examples
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-uni-patterns -Wmissed-specialisations -Wmissing-export-lists -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , valida
+  default-language: Haskell2010
+
 test-suite valida-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs

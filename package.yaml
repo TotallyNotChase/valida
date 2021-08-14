@@ -36,6 +36,17 @@ library:
   ghc-options:
   - -O3
 
+executables:
+  valida-examples-exe:
+    main:                Main.hs
+    source-dirs:         examples
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - valida
+
 tests:
   valida-test:
     main:                Spec.hs

@@ -1,7 +1,7 @@
 # Proofs of Applicative Functor laws for `forall e inp a. Semigroup e => Validator e inp a`
 
 ```hs
-newtype Validator e inp a = Validator { validate :: inp -> Validation e a }
+newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a }
 ```
 where-
 ```hs

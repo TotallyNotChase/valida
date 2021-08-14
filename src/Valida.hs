@@ -1,3 +1,5 @@
+{-# LANGUAGE Safe #-}
+
 module Valida
     ( Selector
       -- * Primary data types

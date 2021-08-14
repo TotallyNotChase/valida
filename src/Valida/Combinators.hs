@@ -1,3 +1,5 @@
+{-# LANGUAGE Safe #-}
+
 module Valida.Combinators
     ( -- * Primitive 'NonEmpty' combinators
       failureIf
@@ -55,9 +57,9 @@ module Valida.Combinators
 
 import Control.Applicative (Applicative (liftA2))
 import Data.Foldable       (Foldable (fold))
+import Data.Ix             (Ix (inRange))
 import Data.List.NonEmpty  (NonEmpty)
 
-import Data.Ix
 import Valida.Utils          (neSingleton)
 import Valida.Validation     (Validation (..))
 import Valida.ValidationRule (ValidationRule (..), vrule)

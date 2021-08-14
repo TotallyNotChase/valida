@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE Safe          #-}
 
 module Valida.ValidationRule
     ( ValidationRule (..)

@@ -1,3 +1,5 @@
+{-# LANGUAGE Safe #-}
+
 module Valida.Utils
     ( neSingleton
     ) where

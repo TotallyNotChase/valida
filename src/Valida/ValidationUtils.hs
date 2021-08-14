@@ -1,3 +1,5 @@
+{-# LANGUAGE Safe #-}
+
 module Valida.ValidationUtils
     ( -- * Transformations between 'Either' and 'Validation'
       fromEither

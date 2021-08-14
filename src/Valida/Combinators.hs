@@ -58,7 +58,7 @@ import Data.Foldable       (Foldable (fold))
 import Data.List.NonEmpty  (NonEmpty)
 
 import Data.Ix
-import Valida.Utils          (singleton)
+import Valida.Utils          (neSingleton)
 import Valida.Validation     (Validation (..))
 import Valida.ValidationRule (ValidationRule (..), vrule)
 
@@ -71,14 +71,14 @@ import Valida.ValidationRule (ValidationRule (..), vrule)
 prop> failureIf predc = failureUnless (not . predc)
 -}
 failureIf :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
-failureIf predc = predToRule (not . predc) . singleton
+failureIf predc = predToRule (not . predc) . neSingleton
 
 {- | Build a rule that /fails/ with given error __unless the given rule succeeds__.
 
 prop> failureUnless predc = failureIf (not . predc)
 -}
 failureUnless :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
-failureUnless predc = predToRule predc . singleton
+failureUnless predc = predToRule predc . neSingleton
 
 ---------------------------------------------------------------------
 -- Primitive /Unit/ combinators

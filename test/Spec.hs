@@ -19,7 +19,7 @@ import Valida (Validation (..), ValidationRule, Validator (validate), failureIf,
                satisfyAll, satisfyAny, successes, toEither, validation, verify, vrule, (-?>), (</>), (<?>))
 
 import Gen   (NonEmptyLQ, ValidationQ (..))
-import Utils (singleton)
+import Utils (neSingleton)
 
 -- | Helper to directly make a ValidationRule out of an error and predicate function.
 predToVRule :: e -> (a -> Bool) -> ValidationRule e a
@@ -33,10 +33,10 @@ validatify = validate . verify
 testPrimCombs :: [TestTree]
 testPrimCombs =
   [ testCase "failureIf fails with expected error when predicate yields true" $ do
-      testValidator (failureIf $ (<7) . sum, "Sum is too small.", [1, 2] :: [Int], const . Failure . singleton)
-      testValidator (failureIf $ (<7) . sum, "Sum is too small.", [5, 1] :: [Int], const . Failure . singleton)
-      testValidator (failureIf (==0), "Equal to 0", 0 :: Int, const . Failure . singleton)
-      testValidator (failureIf null, "Is empty", [] :: [()], const . Failure . singleton)
+      testValidator (failureIf $ (<7) . sum, "Sum is too small.", [1, 2] :: [Int], const . Failure . neSingleton)
+      testValidator (failureIf $ (<7) . sum, "Sum is too small.", [5, 1] :: [Int], const . Failure . neSingleton)
+      testValidator (failureIf (==0), "Equal to 0", 0 :: Int, const . Failure . neSingleton)
+      testValidator (failureIf null, "Is empty", [] :: [()], const . Failure . neSingleton)
   , testCase "failureIf succeeds when predicate yields false" $ do
       testValidator (failureIf (elem 'c'), "Has the letter 'c'", "foo", const Success)
       testValidator (failureIf isNothing, "Is nothing", Just (), const Success)
@@ -48,10 +48,10 @@ testPrimCombs =
       testValidator (failureUnless (==0), "Equal to 0", 0 :: Int, const Success)
       testValidator (failureUnless null, "Is empty", [] :: [()], const Success)
   , testCase "failureUnless fails with expected error when predicate yields false" $ do
-      testValidator (failureUnless (elem 'c'), "Has the letter 'c'", "foo", const . Failure . singleton)
-      testValidator (failureUnless isNothing, "Is nothing", Just (), const . Failure . singleton)
-      testValidator (failureUnless isRight, "Is right (Either)", Left () :: Either () (), const . Failure . singleton)
-      testValidator (failureUnless or, "Has True", [False, False, False], const . Failure . singleton)
+      testValidator (failureUnless (elem 'c'), "Has the letter 'c'", "foo", const . Failure . neSingleton)
+      testValidator (failureUnless isNothing, "Is nothing", Just (), const . Failure . neSingleton)
+      testValidator (failureUnless isRight, "Is right (Either)", Left () :: Either () (), const . Failure . neSingleton)
+      testValidator (failureUnless or, "Has True", [False, False, False], const . Failure . neSingleton)
   ]
   where
     testValidator ~(rule, err, inp, expct) = rule err `validatify` inp @?= expct err inp
@@ -200,28 +200,28 @@ testErrorPreservation =
 -- | Test the relation between NonEmpty and Unit combinators.
 testNEUnitRelation :: [TestTree]
 testNEUnitRelation =
-  [ QC.testProperty "(QC) failureIf p err = label (const (singleton err)) (failureIf' p)"
+  [ QC.testProperty "(QC) failureIf p err = label (const (neSingleton err)) (failureIf' p)"
       ((\predc inp err -> QC.classify (predc inp) "Significant"
         $ QC.classify (not $ predc inp) "Trivial"
         $ failureIf predc err `validatify` inp
-        == (failureIf' predc <?> const (singleton err)) `validatify` inp
+        == (failureIf' predc <?> const (neSingleton err)) `validatify` inp
        ) :: (Char -> Bool) -> Char -> String -> QC.Property
       )
-  , SC.testProperty "(SC) failureIf p err = label (const (singleton err)) (failureIf' p)"
+  , SC.testProperty "(SC) failureIf p err = label (const (neSingleton err)) (failureIf' p)"
       ((\predc inp err -> failureIf predc err `validatify` inp
-        == (failureIf' predc <?> const (singleton err)) `validatify` inp
+        == (failureIf' predc <?> const (neSingleton err)) `validatify` inp
        ) :: (Bool -> Bool) -> Bool -> Int -> Bool
       )
-  , QC.testProperty "(QC) failureUnless p err = label (const (singleton err)) (failureUnless' p)"
+  , QC.testProperty "(QC) failureUnless p err = label (const (neSingleton err)) (failureUnless' p)"
       ((\predc inp err -> QC.classify (not $ predc inp) "Significant"
         $ QC.classify (predc inp) "Trivial"
         $ failureUnless predc err `validatify` inp
-        == (failureUnless' predc <?> const (singleton err)) `validatify` inp
+        == (failureUnless' predc <?> const (neSingleton err)) `validatify` inp
        ) :: (Char -> Bool) -> Char -> String -> QC.Property
       )
-  , SC.testProperty "(SC) failureUnless p err = label (const (singleton err)) (failureUnless' p)"
+  , SC.testProperty "(SC) failureUnless p err = label (const (neSingleton err)) (failureUnless' p)"
       ((\predc inp err -> failureUnless predc err `validatify` inp
-        == (failureUnless' predc <?> const (singleton err)) `validatify` inp
+        == (failureUnless' predc <?> const (neSingleton err)) `validatify` inp
        ) :: (Bool -> Bool) -> Bool -> Int -> Bool
       )
   ]
@@ -247,9 +247,9 @@ testIfUnlessRelation =
       (helper :: (String -> Bool) -> String -> Bool)
   , SC.testProperty "(SC) failureIf' p = failureUnless' (not . p)"
       (helper :: (Bool -> Bool) -> Bool -> Bool)
-  , QC.testProperty "(QC) failureIf p err = negateRule (singleton err) (failureUnless' p)"
+  , QC.testProperty "(QC) failureIf p err = negateRule (neSingleton err) (failureUnless' p)"
       (negateHelper :: (String -> Bool, String) -> String -> Bool)
-  , SC.testProperty "(SC) failureIf p err = negateRule (singleton err) (failureUnless' p)"
+  , SC.testProperty "(SC) failureIf p err = negateRule (neSingleton err) (failureUnless' p)"
       (negateHelper :: (Bool -> Bool, Char) -> Bool -> Bool)
   , QC.testProperty "(QC) failureIf' p = negateRule' (failureUnless' p)"
       (negateHelper' :: (String -> Bool) -> String -> Bool)
@@ -262,9 +262,9 @@ testIfUnlessRelation =
         == failureUnless' (not . predc) `validatify` inp
     negateHelper :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
     negateHelper ~(predc, err) inp = failureIf predc err `validatify` inp
-        == negateRule (singleton err) (failureUnless' predc) `validatify` inp
+        == negateRule (neSingleton err) (failureUnless' predc) `validatify` inp
         && failureUnless predc err `validatify` inp
-        == negateRule (singleton err) (failureIf' predc) `validatify` inp
+        == negateRule (neSingleton err) (failureIf' predc) `validatify` inp
     negateHelper' :: Eq a => (a -> Bool) -> a -> Bool
     negateHelper' predc inp = failureIf' predc `validatify` inp
         == negateRule' (failureUnless' predc) `validatify` inp

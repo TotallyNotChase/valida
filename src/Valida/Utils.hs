@@ -1,8 +1,8 @@
 module Valida.Utils
-    ( singleton
+    ( neSingleton
     ) where
 
 import Data.List.NonEmpty (NonEmpty ((:|)))
 
-singleton :: a -> NonEmpty a
-singleton = (:|[])
+neSingleton :: a -> NonEmpty a
+neSingleton = (:|[])

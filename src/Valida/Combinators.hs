@@ -87,21 +87,21 @@ failureUnless' = flip predToRule ()
 -- Common derivates of primitive 'NonEmpty' combinators
 ---------------------------------------------------------------------
 
-{- | Build a equality rule.
+{- | Build an equality rule for value.
 
 prop> mustBe x = failureUnless (==x)
 -}
 mustBe :: Eq a => a -> e -> ValidationRule (NonEmpty e) a
 mustBe x = failureUnless (==x)
 
-{- | Build a minimum length rule.
+{- | Build a minimum length (inclusive) rule.
 
 prop> minLengthOf x = failureUnless ((>=n) . length)
 -}
 minLengthOf :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 minLengthOf n = failureUnless ((>=n) . length)
 
-{- | Build a maximum length rule.
+{- | Build a maximum length (inclusive) rule.
 
 prop> maxLengthOf n = failureUnless ((<=n) . length)
 -}
@@ -116,14 +116,14 @@ prop> notEmpty = failureIf null
 notEmpty :: Foldable t => e -> ValidationRule (NonEmpty e) (t a)
 notEmpty = failureIf null
 
-{- | Build a minimum value rule.
+{- | Build a minimum value (inclusive) rule.
 
 prop> minValueOf x = failureUnless (>=x)
 -}
 minValueOf :: Ord a => a -> e -> ValidationRule (NonEmpty e) a
 minValueOf x = failureUnless (>=x)
 
-{- | Build a maximum value rule.
+{- | Build a maximum value (inclusive) rule.
 
 prop> maxValueOf x = failureUnless (<=x)
 -}

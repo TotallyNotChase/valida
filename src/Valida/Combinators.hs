@@ -35,6 +35,8 @@ module Valida.Combinators
     , mustContain'
     , notEmpty'
     , onlyContains'
+      -- * Type specific 'ValidationRule's
+    , optionally
     ) where
 
 import Control.Applicative (Applicative (liftA2))
@@ -271,6 +273,17 @@ prop> satisfyAll = foldr andAlso mempty
 -}
 satisfyAll :: Foldable t => t (ValidationRule e a) -> ValidationRule e a
 satisfyAll = fold
+
+---------------------------------------------------------------------
+-- Type specific 'ValidationRule's
+---------------------------------------------------------------------
+
+{- | Build a rule that runs given rule only if input is 'Just'.
+
+Yields 'Success' when input is 'Nothing.
+-}
+optionally :: ValidationRule e a -> ValidationRule e (Maybe a)
+optionally (ValidationRule rule) = vrule $ maybe (Success ()) rule
 
 -- | Utility to convert a regular predicate function to a 'ValidationRule'. __INTERNAL__
 predToRule :: (a -> Bool) -> e -> ValidationRule e a

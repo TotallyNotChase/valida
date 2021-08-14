@@ -14,9 +14,9 @@ import           Test.Tasty.HUnit      (testCase, (@?=))
 import qualified Test.Tasty.QuickCheck as QC
 import qualified Test.Tasty.SmallCheck as SC
 
-import Valida (Validation (..), ValidationRule, Validator (validate), failureIf, failureIf', failureUnless,
+import Valida (Validation (..), ValidationRule, Validator (runValidator), failureIf, failureIf', failureUnless,
                failureUnless', failures, falseRule, fromEither, label, negateRule, negateRule', partitionValidations,
-               satisfyAll, satisfyAny, successes, toEither, validation, verify, vrule, (-?>), (</>), (<?>))
+               satisfyAll, satisfyAny, successes, toEither, validation, validate, vrule, (-?>), (</>), (<?>))
 
 import Gen   (NonEmptyLQ, ValidationQ (..))
 import Utils (neSingleton)
@@ -27,7 +27,7 @@ predToVRule err f = vrule $ bool (Failure err) (Success ()) . f
 
 -- | Helper to build a validator and run it on input at once.
 validatify :: ValidationRule e a -> a -> Validation e a
-validatify = validate . verify
+validatify = runValidator . validate
 
 -- | Test the primitive non empty combinators.
 testPrimCombs :: [TestTree]
@@ -131,8 +131,8 @@ testValidatorCollc =
         )
   ]
   where
-    validatorOf f = verify $ predToVRule () f
-    testValidator ~(validator, inp, expct) = validate validator inp @?= expct inp
+    validatorOf f = validate $ predToVRule () f
+    testValidator ~(validator, inp, expct) = runValidator validator inp @?= expct inp
 
 -- | Test utility functions for Validation.
 testValidationUtils :: [TestTree]
@@ -193,8 +193,8 @@ testErrorPreservation =
   ]
   where
     helper :: (Traversable t, Monoid e, Eq e, Eq (t inp)) => inp -> t e -> Bool
-    helper inp errs = validate
-        (traverse (\e -> verify $ label (const e) $ failureUnless' (const False)) errs)
+    helper inp errs = runValidator
+        (traverse (\e -> validate $ label (const e) $ failureUnless' (const False)) errs)
         inp == Failure (fold errs)
 
 -- | Test the relation between NonEmpty and Unit combinators.

@@ -15,7 +15,7 @@ import Valida.Validation (Validation (..))
 type Selector a b = a -> b
 
 -- | An applicative validator. Validates a predicate on an input when run and returns the 'Validation' result.
-newtype Validator e inp a = Validator { validate :: inp -> Validation e a } deriving (Typeable, Generic)
+newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a } deriving (Typeable, Generic)
 
 {- |
 * 'fmap' maps given function over the 'Validation' result by re-using 'fmap' on it.

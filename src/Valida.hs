@@ -3,10 +3,10 @@ module Valida
       -- * Primary data types
     , Validation (..)
     , ValidationRule
-    , Validator (validate)
+    , Validator (runValidator)
       -- * Functions for building Valida data types
-    , select
     , verify
+    , validate
     , vrule
     , (-?>)
       -- * Reassigning corresponding error to 'ValidationRule'
@@ -25,7 +25,7 @@ import Valida.ValidationRule  (ValidationRule (..), vrule)
 import Valida.ValidationUtils
 import Valida.Validator       (Selector, Validator (..))
 
-infix 5 `select`
+infix 5 `verify`
 
 {- | Build a validator from a 'ValidationRule' and a 'Selector'.
 
@@ -34,14 +34,14 @@ The 'Validator` first runs given __selector__ on its input to obtain the validat
 
 If validation is successful, the validation target is put into the 'Validation' result.
 -}
-select :: ValidationRule e b -> Selector a b -> Validator e a b
-select (ValidationRule rule) selector = Validator $ liftA2 (<$) selector (rule . selector)
+verify :: ValidationRule e b -> Selector a b -> Validator e a b
+verify (ValidationRule rule) selector = Validator $ liftA2 (<$) selector (rule . selector)
 
--- | A synonym for 'select' with its arguments flipped.
+-- | A synonym for 'verify' with its arguments flipped.
 infix 5 -?>
 
 (-?>) :: Selector a b -> ValidationRule e b -> Validator e a b
-(-?>) = flip select
+(-?>) = flip verify
 
 ---------------------------------------------------------------------
 -- Reassigning corresponding error to 'ValidationRule'.
@@ -71,7 +71,7 @@ infix 6 <?>
 The 'Validator' runs the rule on its input. If validation is successful, the input is put into the 'Validation'
 result.
 
-prop> verify rule = select rule id
+prop> validate rule = verify rule id
 -}
-verify :: ValidationRule e a -> Validator e a a
-verify = (-?>) id
+validate :: ValidationRule e a -> Validator e a a
+validate = (-?>) id

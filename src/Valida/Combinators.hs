@@ -17,6 +17,9 @@ module Valida.Combinators
     , (</>)
       -- * Common derivates of primitive 'NonEmpty' combinators
     , atleastContains
+    , lengthAbove
+    , lengthBelow
+    , lengthWithin
     , maxLengthOf
     , maxValueOf
     , minLengthOf
@@ -24,9 +27,16 @@ module Valida.Combinators
     , mustBe
     , mustContain
     , notEmpty
+    , ofLength
     , onlyContains
+    , valueAbove
+    , valueBelow
+    , valueWithin
       -- * Common derivates of primitive /Unit/ combinators
     , atleastContains'
+    , lengthAbove'
+    , lengthBelow'
+    , lengthWithin'
     , maxLengthOf'
     , maxValueOf'
     , minLengthOf'
@@ -34,7 +44,11 @@ module Valida.Combinators
     , mustBe'
     , mustContain'
     , notEmpty'
+    , ofLength'
     , onlyContains'
+    , valueAbove'
+    , valueBelow'
+    , valueWithin'
       -- * Type specific 'ValidationRule's
     , optionally
     ) where
@@ -43,6 +57,7 @@ import Control.Applicative (Applicative (liftA2))
 import Data.Foldable       (Foldable (fold))
 import Data.List.NonEmpty  (NonEmpty)
 
+import Data.Ix
 import Valida.Utils          (singleton)
 import Valida.Validation     (Validation (..))
 import Valida.ValidationRule (ValidationRule (..), vrule)
@@ -96,19 +111,42 @@ prop> mustBe x = failureUnless (==x)
 mustBe :: Eq a => a -> e -> ValidationRule (NonEmpty e) a
 mustBe x = failureUnless (==x)
 
+{- | Build an equality rule for length.
+
+prop> ofLength x = failureUnless ((==x) . length)
+-}
+ofLength :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
+ofLength n = failureUnless $ (==n) . length
+
 {- | Build a minimum length (inclusive) rule.
 
 prop> minLengthOf x = failureUnless ((>=n) . length)
 -}
 minLengthOf :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
-minLengthOf n = failureUnless ((>=n) . length)
+minLengthOf n = failureUnless $ (>=n) . length
 
 {- | Build a maximum length (inclusive) rule.
 
 prop> maxLengthOf n = failureUnless ((<=n) . length)
 -}
 maxLengthOf :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
-maxLengthOf n = failureUnless ((<=n) . length)
+maxLengthOf n = failureUnless $ (<=n) . length
+
+{- | Build a minimum length (inclusive) rule.
+
+prop> lengthAbove x = minLengthOf (x + 1)
+prop> lengthAbove x = failureUnless ((>n) . length)
+-}
+lengthAbove :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
+lengthAbove n = failureUnless $ (>n) . length
+
+{- | Build a maximum length (inclusive) rule.
+
+prop> lengthBelow x = maxLengthOf (x - 1)
+prop> lengthBelow x = failureUnless ((<n) . length)
+-}
+lengthBelow :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
+lengthBelow n = failureUnless $ (<n) . length
 
 {- | Build a maximum length rule.
 
@@ -117,6 +155,14 @@ prop> notEmpty = failureIf null
 -}
 notEmpty :: Foldable t => e -> ValidationRule (NonEmpty e) (t a)
 notEmpty = failureIf null
+
+{- | Build an 'inRange' rule for length.
+
+prop> lengthWithin (min, max) = minLengthOf min `andAlso` maxLengthOf max
+prop> lengthWithin r = failureUnless (inRange r . length)
+-}
+lengthWithin :: Foldable t => (Int, Int) -> e -> ValidationRule (NonEmpty e) (t a)
+lengthWithin r = failureUnless $ inRange r . length
 
 {- | Build a minimum value (inclusive) rule.
 
@@ -132,19 +178,43 @@ prop> maxValueOf x = failureUnless (<=x)
 maxValueOf :: Ord a => a -> e -> ValidationRule (NonEmpty e) a
 maxValueOf x = failureUnless (<=x)
 
+{- | Build a minimum value (exclusive) rule.
+
+prop> valueAbove x = minValueOf (x + 1)
+prop> valueAbove x = failureUnless (>x)
+-}
+valueAbove :: Ord a => a -> e -> ValidationRule (NonEmpty e) a
+valueAbove n = failureUnless (>n)
+
+{- | Build a maximum value (exclusive) rule.
+
+prop> valueBelow x = minValueOf (x - 1)
+prop> valueBelow x = failureUnless (<x)
+-}
+valueBelow :: Ord a => a -> e -> ValidationRule (NonEmpty e) a
+valueBelow n = failureUnless (<n)
+
+{- | Build an 'inRange' rule for value.
+
+prop> valueWithin (min, max) = minValueOf min `andAlso` maxValueOf max
+prop> valueWithin r = failureUnless (inRange r)
+-}
+valueWithin :: Ix a => (a, a) -> e -> ValidationRule (NonEmpty e) a
+valueWithin r = failureUnless $ inRange r
+
 {- | Build an 'all' rule.
 
 prop> onlyContains x = failureUnless (all x)
 -}
 onlyContains :: Foldable t => (a -> Bool) -> e -> ValidationRule (NonEmpty e) (t a)
-onlyContains x = failureUnless (all x)
+onlyContains x = failureUnless $ all x
 
 {- | Build an 'any' rule.
 
 prop> atleastContains x = failureUnless (any x)
 -}
 atleastContains :: Foldable t => (a -> Bool) -> e -> ValidationRule (NonEmpty e) (t a)
-atleastContains x = failureUnless (any x)
+atleastContains x = failureUnless $ any x
 
 {- | Build an 'elem' rule.
 
@@ -153,7 +223,7 @@ prop> mustContain x = atleastContains (==x)
 prop> mustContain x = failureUnless (elem x)
 -}
 mustContain :: (Foldable t, Eq a) => a -> e -> ValidationRule (NonEmpty e) (t a)
-mustContain x = failureUnless (elem x)
+mustContain x = failureUnless $ elem x
 
 ---------------------------------------------------------------------
 -- Common derivates of primitive /Unit/ combinators
@@ -163,17 +233,33 @@ mustContain x = failureUnless (elem x)
 mustBe' :: Eq a => a -> ValidationRule () a
 mustBe' x = failureUnless' (==x)
 
+-- | Like 'ofLength' but uses /Unit/ as the 'ValidationRule' error type.
+ofLength' :: Foldable t => Int -> ValidationRule () (t a)
+ofLength' n = failureUnless' $ (==n) . length
+
 -- | Like 'minLengthOf' but uses /Unit/ as the 'ValidationRule' error type.
 minLengthOf' :: Foldable t => Int -> ValidationRule () (t a)
-minLengthOf' n = failureUnless' ((>=n) . length)
+minLengthOf' n = failureUnless' $ (>=n) . length
 
 -- | Like 'maxLengthOf' but uses /Unit/ as the 'ValidationRule' error type.
 maxLengthOf' :: Foldable t => Int -> ValidationRule () (t a)
-maxLengthOf' n = failureUnless' ((<=n) . length)
+maxLengthOf' n = failureUnless' $ (<=n) . length
+
+-- | Like 'lengthAbove' but uses /Unit/ as the 'ValidationRule' error type.
+lengthAbove' :: Foldable t => Int -> ValidationRule () (t a)
+lengthAbove' n = failureUnless' $ (>n) . length
+
+-- | Like 'lengthBelow' but uses /Unit/ as the 'ValidationRule' error type.
+lengthBelow' :: Foldable t => Int -> ValidationRule () (t a)
+lengthBelow' n = failureUnless' $ (<n) . length
 
 -- | Like 'notEmpty' but uses /Unit/ as the 'ValidationRule' error type.
 notEmpty' :: Foldable t => e -> ValidationRule (NonEmpty e) (t a)
 notEmpty' = failureIf null
+
+-- | Like 'lengthWithin' but uses /Unit/ as the 'ValidationRule' error type.
+lengthWithin' :: Foldable t => (Int, Int) -> ValidationRule () (t a)
+lengthWithin' r = failureUnless' $ inRange r . length
 
 -- | Like 'minValueOf' but uses /Unit/ as the 'ValidationRule' error type.
 minValueOf' :: Ord a => a -> ValidationRule () a
@@ -183,17 +269,29 @@ minValueOf' x = failureUnless' (>=x)
 maxValueOf' :: Ord a => a -> ValidationRule () a
 maxValueOf' x = failureUnless' (<=x)
 
+-- | Like 'valueAbove' but uses /Unit/ as the 'ValidationRule' error type.
+valueAbove' :: Ord a => a -> ValidationRule () a
+valueAbove' n = failureUnless' (>n)
+
+-- | Like 'valueBelow' but uses /Unit/ as the 'ValidationRule' error type.
+valueBelow' :: Ord a => a -> ValidationRule () a
+valueBelow' n = failureUnless' (<n)
+
+-- | Like 'valueWithin' but uses /Unit/ as the 'ValidationRule' error type.
+valueWithin' :: Ix a => (a, a) -> ValidationRule () a
+valueWithin' r = failureUnless' $ inRange r
+
 -- | Like 'onlyContains' but uses /Unit/ as the 'ValidationRule' error type.
 onlyContains' :: Foldable t => (a -> Bool) -> ValidationRule () (t a)
-onlyContains' x = failureUnless' (all x)
+onlyContains' x = failureUnless' $ all x
 
 -- | Like 'atleastContains' but uses /Unit/ as the 'ValidationRule' error type.
 atleastContains' :: Foldable t => (a -> Bool) -> ValidationRule () (t a)
-atleastContains' x = failureUnless' (any x)
+atleastContains' x = failureUnless' $ any x
 
 -- | Like 'mustContain' but uses /Unit/ as the 'ValidationRule' error type.
 mustContain' :: (Foldable t, Eq a) => a -> ValidationRule () (t a)
-mustContain' x = failureUnless' (elem x)
+mustContain' x = failureUnless' $ elem x
 
 ---------------------------------------------------------------------
 -- Negating 'ValidationRule'

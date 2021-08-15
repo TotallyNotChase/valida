@@ -16,7 +16,7 @@ import qualified Test.Tasty.SmallCheck as SC
 
 import Valida (Validation (..), ValidationRule, Validator (runValidator), failureIf, failureIf', failureUnless,
                failureUnless', failures, falseRule, fromEither, label, negateRule, negateRule', partitionValidations,
-               satisfyAll, satisfyAny, successes, toEither, validation, validate, vrule, (-?>), (</>), (<?>))
+               satisfyAll, satisfyAny, successes, toEither, validate, validation, vrule, (-?>), (</>), (<?>))
 
 import Gen   (NonEmptyLQ, ValidationQ (..))
 import Utils (neSingleton)

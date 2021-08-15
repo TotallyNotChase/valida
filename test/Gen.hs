@@ -2,8 +2,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Gen
-    ( ValidationQ (..)
-    , NonEmptyLQ
+    ( NonEmptyLQ
+    , ValidationQ (..)
     ) where
 
 import qualified Data.List.NonEmpty as NE
@@ -41,8 +41,8 @@ instance Serial m a => Serial m (NonEmptyLQ a) where
 
 instance Functor NonEmptyLQ where
     fmap f (NonEmptyListQ l) = NonEmptyListQ $ f <$> l
-    fmap f (NonEmptyQ l) = NonEmptyQ $ f <$> l
+    fmap f (NonEmptyQ l)     = NonEmptyQ $ f <$> l
 
 instance Foldable NonEmptyLQ where
     foldMap f (NonEmptyListQ l) = foldMap f $ QC.getNonEmpty l
-    foldMap f (NonEmptyQ l) = foldMap f l
+    foldMap f (NonEmptyQ l)     = foldMap f l

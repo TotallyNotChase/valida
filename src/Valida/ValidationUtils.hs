@@ -13,9 +13,10 @@ module Valida.ValidationUtils
     , partitionValidations
     , successes
     , validation
+    , validationConst
     ) where
 
-import Valida.Validation (Validation (..), validation)
+import Valida.Validation (Validation (..), validation, validationConst)
 
 {- | Convert a 'Validation' to an 'Either'.
 

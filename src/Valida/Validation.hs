@@ -5,6 +5,7 @@
 module Valida.Validation
     ( Validation (..)
     , validation
+    , validationConst
     ) where
 
 import Data.Bifoldable    (Bifoldable (bifoldMap))
@@ -69,3 +70,15 @@ In case of 'Failure e', apply the first function to e; in case of 'Success a', a
 validation :: (e -> c) -> (a -> c) -> Validation e a -> c
 validation ef _ (Failure e) = ef e
 validation _ af (Success a) = af a
+
+{- | Case analysis for 'Validation', with replacer.
+
+This is similar to 'validation', but takes in replacers instead of functions.
+
+In case of 'Failure', return the first argument; otherwise, return the second argument.
+
+prop> validationConst e a = validation (const e) (const a)
+-}
+validationConst :: p -> p -> Validation e a -> p
+validationConst e _ (Failure _) = e
+validationConst _ a _           = a

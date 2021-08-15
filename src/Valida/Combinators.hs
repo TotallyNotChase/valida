@@ -56,12 +56,13 @@ module Valida.Combinators
     ) where
 
 import Control.Applicative (Applicative (liftA2))
+import Data.Bool           (bool)
 import Data.Foldable       (Foldable (fold))
 import Data.Ix             (Ix (inRange))
 import Data.List.NonEmpty  (NonEmpty)
 
 import Valida.Utils          (neSingleton)
-import Valida.Validation     (Validation (..))
+import Valida.Validation     (Validation (..), validationConst)
 import Valida.ValidationRule (ValidationRule (..), vrule)
 
 ---------------------------------------------------------------------
@@ -301,15 +302,11 @@ mustContain' x = failureUnless' $ elem x
 
 -- | Build a rule that succeeds if given rule fails and vice versa.
 negateRule :: e -> ValidationRule e1 a -> ValidationRule e a
-negateRule err (ValidationRule rule) = vrule $ \x -> case rule x of
-    Failure _ -> Success ()
-    Success _ -> Failure err
+negateRule err (ValidationRule rule) = vrule $ validationConst (Success ()) (Failure err) . rule
 
 -- | Like 'negateRule' but uses /Unit/ as the 'ValidationRule' error type.
 negateRule' :: ValidationRule e a -> ValidationRule () a
-negateRule' (ValidationRule rule) = vrule $ \x -> case rule x of
-    Failure _ -> Success ()
-    Success _ -> Failure ()
+negateRule' (ValidationRule rule) = vrule $ ($ ()) . validationConst Failure Success . rule
 
 ---------------------------------------------------------------------
 -- Combining 'ValidationRule's
@@ -387,6 +384,4 @@ optionally (ValidationRule rule) = vrule $ maybe (Success ()) rule
 
 -- | Utility to convert a regular predicate function to a 'ValidationRule'. __INTERNAL__
 predToRule :: (a -> Bool) -> e -> ValidationRule e a
-predToRule predc err = vrule $ \x -> if predc x
-    then Success ()
-    else Failure err
+predToRule predc err = vrule $ bool (Failure err) (Success ()) . predc

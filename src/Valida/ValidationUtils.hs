@@ -61,10 +61,12 @@ fromSuccess a _           = a
 -- | Extracts from a list of 'Validation' all the Failure elements, in order.
 failures :: [Validation e a] -> [e]
 failures xs = [e | Failure e <- xs]
+{-# INLINABLE failures #-}
 
 -- | Extracts from a list of 'Validation' all the Success elements, in order.
 successes :: [Validation e a] -> [a]
 successes xs = [a | Success a <- xs]
+{-# INLINABLE successes #-}
 
 {- | Partitions a list of Either into two lists.
 

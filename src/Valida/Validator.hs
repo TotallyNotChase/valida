@@ -41,7 +41,9 @@ instance Semigroup e => Applicative (Validator e inp) where
     {-# SPECIALIZE instance Applicative (Validator () inp) #-}
     {-# SPECIALIZE instance Applicative (Validator [err] inp) #-}
     pure = Validator . const . Success
+    {-# INLINEABLE pure #-}
     Validator ff <*> Validator v = Validator $ liftA2 (<*>) ff v
+    {-# INLINEABLE (<*>) #-}
 
 {- |
 * '(<>)' applies input over both validator functions, and combines the 'Validation' results using '(<>)'.
@@ -51,3 +53,4 @@ instance Semigroup e => Semigroup (Validator e inp a) where
     {-# SPECIALIZE instance Semigroup (Validator () inp a) #-}
     {-# SPECIALIZE instance Semigroup (Validator [err] inp a) #-}
     Validator f <> Validator g = Validator $ f <> g
+    {-# INLINEABLE (<>) #-}

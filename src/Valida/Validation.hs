@@ -43,10 +43,12 @@ instance Semigroup e => Applicative (Validation e) where
     {-# SPECIALIZE instance Applicative (Validation ()) #-}
     {-# SPECIALIZE instance Applicative (Validation [err]) #-}
     pure = Success
+    {-# INLINEABLE pure #-}
     Success f <*> Success b = Success $ f b
     Success _ <*> Failure e = Failure e
     Failure e <*> Success _ = Failure e
     Failure x <*> Failure y = Failure $ x <> y
+    {-# INLINEABLE (<*>) #-}
 
 {- |
 * '(<>)' behaves similar to the 'Either' semigroup. i.e Returns the first 'Success'. But also accumulates 'Failure's.
@@ -58,6 +60,7 @@ instance Semigroup e => Semigroup (Validation e a) where
     s@(Success _) <> _             = s
     _             <> s@(Success _) = s
     Failure x     <> Failure y     = Failure $ x <> y
+    {-# INLINEABLE (<>) #-}
 
 instance Foldable (Validation e) where
     foldMap = validation (const mempty)

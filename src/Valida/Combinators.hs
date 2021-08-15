@@ -257,8 +257,8 @@ lengthBelow' :: Foldable t => Int -> ValidationRule () (t a)
 lengthBelow' n = failureUnless' $ (<n) . length
 
 -- | Like 'notEmpty' but uses /Unit/ as the 'ValidationRule' error type.
-notEmpty' :: Foldable t => e -> ValidationRule (NonEmpty e) (t a)
-notEmpty' = failureIf null
+notEmpty' :: Foldable t => ValidationRule () (t a)
+notEmpty' = failureIf' null
 
 -- | Like 'lengthWithin' but uses /Unit/ as the 'ValidationRule' error type.
 lengthWithin' :: Foldable t => (Int, Int) -> ValidationRule () (t a)

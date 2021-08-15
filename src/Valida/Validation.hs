@@ -12,6 +12,7 @@ import Data.Bifoldable    (Bifoldable (bifoldMap))
 import Data.Bifunctor     (Bifunctor (bimap))
 import Data.Bitraversable (Bitraversable)
 import Data.Data          (Data)
+import Data.List.NonEmpty (NonEmpty)
 import Data.Typeable      (Typeable)
 import GHC.Generics       (Generic)
 
@@ -38,6 +39,9 @@ instance Bifunctor Validation where
 * '(<*>)' behaves similar to 'Either', but accumulates failures instead of stopping.
 -}
 instance Semigroup e => Applicative (Validation e) where
+    {-# SPECIALIZE instance Applicative (Validation (NonEmpty err)) #-}
+    {-# SPECIALIZE instance Applicative (Validation ()) #-}
+    {-# SPECIALIZE instance Applicative (Validation [err]) #-}
     pure = Success
     Success f <*> Success b = Success $ f b
     Success _ <*> Failure e = Failure e
@@ -48,6 +52,9 @@ instance Semigroup e => Applicative (Validation e) where
 * '(<>)' behaves similar to the 'Either' semigroup. i.e Returns the first 'Success'. But also accumulates 'Failure's.
 -}
 instance Semigroup e => Semigroup (Validation e a) where
+    {-# SPECIALIZE instance Semigroup (Validation (NonEmpty err) a) #-}
+    {-# SPECIALIZE instance Semigroup (Validation () a) #-}
+    {-# SPECIALIZE instance Semigroup (Validation [err] a) #-}
     s@(Success _) <> _             = s
     _             <> s@(Success _) = s
     Failure x     <> Failure y     = Failure $ x <> y

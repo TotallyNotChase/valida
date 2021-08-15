@@ -120,6 +120,7 @@ prop> ofLength x = failureUnless ((==x) . length)
 -}
 ofLength :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 ofLength n = failureUnless $ (==n) . length
+{-# SPECIALIZE ofLength :: Int -> e -> ValidationRule (NonEmpty e) [a] #-}
 
 {- | Build a minimum length (inclusive) rule.
 
@@ -127,6 +128,7 @@ prop> minLengthOf x = failureUnless ((>=n) . length)
 -}
 minLengthOf :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 minLengthOf n = failureUnless $ (>=n) . length
+{-# SPECIALIZE minLengthOf :: Int -> e -> ValidationRule (NonEmpty e) [a] #-}
 
 {- | Build a maximum length (inclusive) rule.
 
@@ -134,6 +136,7 @@ prop> maxLengthOf n = failureUnless ((<=n) . length)
 -}
 maxLengthOf :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 maxLengthOf n = failureUnless $ (<=n) . length
+{-# SPECIALIZE maxLengthOf :: Int -> e -> ValidationRule (NonEmpty e) [a] #-}
 
 {- | Build a minimum length (inclusive) rule.
 
@@ -142,6 +145,7 @@ prop> lengthAbove x = failureUnless ((>n) . length)
 -}
 lengthAbove :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 lengthAbove n = failureUnless $ (>n) . length
+{-# SPECIALIZE lengthAbove :: Int -> e -> ValidationRule (NonEmpty e) [a] #-}
 
 {- | Build a maximum length (inclusive) rule.
 
@@ -150,6 +154,7 @@ prop> lengthBelow x = failureUnless ((<n) . length)
 -}
 lengthBelow :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 lengthBelow n = failureUnless $ (<n) . length
+{-# SPECIALIZE lengthBelow :: Int -> e -> ValidationRule (NonEmpty e) [a] #-}
 
 {- | Build a maximum length rule.
 
@@ -158,6 +163,7 @@ prop> notEmpty = failureIf null
 -}
 notEmpty :: Foldable t => e -> ValidationRule (NonEmpty e) (t a)
 notEmpty = failureIf null
+{-# SPECIALIZE notEmpty :: e -> ValidationRule (NonEmpty e) [a] #-}
 
 {- | Build an 'inRange' rule for length.
 
@@ -166,6 +172,7 @@ prop> lengthWithin r = failureUnless (inRange r . length)
 -}
 lengthWithin :: Foldable t => (Int, Int) -> e -> ValidationRule (NonEmpty e) (t a)
 lengthWithin r = failureUnless $ inRange r . length
+{-# SPECIALIZE lengthWithin :: (Int, Int) -> e -> ValidationRule (NonEmpty e) [a] #-}
 
 {- | Build a minimum value (inclusive) rule.
 
@@ -204,6 +211,7 @@ prop> valueWithin r = failureUnless (inRange r)
 -}
 valueWithin :: Ix a => (a, a) -> e -> ValidationRule (NonEmpty e) a
 valueWithin r = failureUnless $ inRange r
+{-# SPECIALIZE valueWithin :: (Int, Int) -> e -> ValidationRule (NonEmpty e) Int #-}
 
 {- | Build an 'all' rule.
 
@@ -211,6 +219,7 @@ prop> onlyContains x = failureUnless (all x)
 -}
 onlyContains :: Foldable t => (a -> Bool) -> e -> ValidationRule (NonEmpty e) (t a)
 onlyContains x = failureUnless $ all x
+{-# SPECIALIZE onlyContains :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) [a] #-}
 
 {- | Build an 'any' rule.
 
@@ -218,6 +227,7 @@ prop> atleastContains x = failureUnless (any x)
 -}
 atleastContains :: Foldable t => (a -> Bool) -> e -> ValidationRule (NonEmpty e) (t a)
 atleastContains x = failureUnless $ any x
+{-# SPECIALIZE atleastContains :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) [a] #-}
 
 {- | Build an 'elem' rule.
 
@@ -227,6 +237,7 @@ prop> mustContain x = failureUnless (elem x)
 -}
 mustContain :: (Foldable t, Eq a) => a -> e -> ValidationRule (NonEmpty e) (t a)
 mustContain x = failureUnless $ elem x
+{-# SPECIALIZE mustContain :: Eq a => a -> e -> ValidationRule (NonEmpty e) [a] #-}
 
 ---------------------------------------------------------------------
 -- Common derivates of primitive /Unit/ combinators
@@ -239,30 +250,37 @@ mustBe' x = failureUnless' (==x)
 -- | Like 'ofLength' but uses /Unit/ as the 'ValidationRule' error type.
 ofLength' :: Foldable t => Int -> ValidationRule () (t a)
 ofLength' n = failureUnless' $ (==n) . length
+{-# SPECIALIZE ofLength' :: Int -> ValidationRule () [a] #-}
 
 -- | Like 'minLengthOf' but uses /Unit/ as the 'ValidationRule' error type.
 minLengthOf' :: Foldable t => Int -> ValidationRule () (t a)
 minLengthOf' n = failureUnless' $ (>=n) . length
+{-# SPECIALIZE minLengthOf' :: Int -> ValidationRule () [a] #-}
 
 -- | Like 'maxLengthOf' but uses /Unit/ as the 'ValidationRule' error type.
 maxLengthOf' :: Foldable t => Int -> ValidationRule () (t a)
 maxLengthOf' n = failureUnless' $ (<=n) . length
+{-# SPECIALIZE maxLengthOf' :: Int -> ValidationRule () [a] #-}
 
 -- | Like 'lengthAbove' but uses /Unit/ as the 'ValidationRule' error type.
 lengthAbove' :: Foldable t => Int -> ValidationRule () (t a)
 lengthAbove' n = failureUnless' $ (>n) . length
+{-# SPECIALIZE lengthAbove' :: Int -> ValidationRule () [a] #-}
 
 -- | Like 'lengthBelow' but uses /Unit/ as the 'ValidationRule' error type.
 lengthBelow' :: Foldable t => Int -> ValidationRule () (t a)
 lengthBelow' n = failureUnless' $ (<n) . length
+{-# SPECIALIZE lengthBelow' :: Int -> ValidationRule () [a] #-}
 
 -- | Like 'notEmpty' but uses /Unit/ as the 'ValidationRule' error type.
 notEmpty' :: Foldable t => ValidationRule () (t a)
 notEmpty' = failureIf' null
+{-# SPECIALIZE notEmpty' :: ValidationRule () [a] #-}
 
 -- | Like 'lengthWithin' but uses /Unit/ as the 'ValidationRule' error type.
 lengthWithin' :: Foldable t => (Int, Int) -> ValidationRule () (t a)
 lengthWithin' r = failureUnless' $ inRange r . length
+{-# SPECIALIZE ofLength' :: Int -> ValidationRule () [a] #-}
 
 -- | Like 'minValueOf' but uses /Unit/ as the 'ValidationRule' error type.
 minValueOf' :: Ord a => a -> ValidationRule () a
@@ -283,18 +301,22 @@ valueBelow' n = failureUnless' (<n)
 -- | Like 'valueWithin' but uses /Unit/ as the 'ValidationRule' error type.
 valueWithin' :: Ix a => (a, a) -> ValidationRule () a
 valueWithin' r = failureUnless' $ inRange r
+{-# SPECIALIZE valueWithin' :: (Int, Int) -> ValidationRule () Int #-}
 
 -- | Like 'onlyContains' but uses /Unit/ as the 'ValidationRule' error type.
 onlyContains' :: Foldable t => (a -> Bool) -> ValidationRule () (t a)
 onlyContains' x = failureUnless' $ all x
+{-# SPECIALIZE onlyContains' :: (a -> Bool) -> ValidationRule () [a] #-}
 
 -- | Like 'atleastContains' but uses /Unit/ as the 'ValidationRule' error type.
 atleastContains' :: Foldable t => (a -> Bool) -> ValidationRule () (t a)
 atleastContains' x = failureUnless' $ any x
+{-# SPECIALIZE atleastContains' :: (a -> Bool) -> ValidationRule () [a] #-}
 
 -- | Like 'mustContain' but uses /Unit/ as the 'ValidationRule' error type.
 mustContain' :: (Foldable t, Eq a) => a -> ValidationRule () (t a)
 mustContain' x = failureUnless' $ elem x
+{-# SPECIALIZE mustContain' :: Eq a => a -> ValidationRule () [a] #-}
 
 ---------------------------------------------------------------------
 -- Negating 'ValidationRule'
@@ -317,6 +339,12 @@ infixr 5 </>
 
 (</>) :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 ValidationRule rule1 </> ValidationRule rule2 = vrule $ liftA2 (<>) rule1 rule2
+{-# SPECIALIZE (</>)
+    :: ValidationRule (NonEmpty err) a
+    -> ValidationRule (NonEmpty err) a
+    -> ValidationRule (NonEmpty err) a #-}
+{-# SPECIALIZE (</>) :: ValidationRule () a -> ValidationRule () a -> ValidationRule () a #-}
+{-# SPECIALIZE (</>) :: ValidationRule [err] a -> ValidationRule [err] a -> ValidationRule [err] a #-}
 
 infixr 5 `orElse`
 
@@ -359,6 +387,9 @@ prop> satisfyAny = foldr orElse falseRule
 -}
 satisfyAny :: (Foldable t, Semigroup e) => t (ValidationRule e a) -> ValidationRule e a
 satisfyAny = foldr1 (</>)
+{-# SPECIALIZE satisfyAny :: [ValidationRule (NonEmpty err) a] -> ValidationRule (NonEmpty err) a #-}
+{-# SPECIALIZE satisfyAny :: [ValidationRule () a] -> ValidationRule () a #-}
+{-# SPECIALIZE satisfyAny :: [ValidationRule [err] a] -> ValidationRule [err] a #-}
 
 {- | Build a rule that /only succeeds/ if __all__ of the given rules succeed. The very first failure is yielded.
 
@@ -370,6 +401,7 @@ prop> satisfyAll = foldr andAlso mempty
 -}
 satisfyAll :: Foldable t => t (ValidationRule e a) -> ValidationRule e a
 satisfyAll = fold
+{-# SPECIALIZE satisfyAll :: [ValidationRule e a] -> ValidationRule e a #-}
 
 ---------------------------------------------------------------------
 -- Type specific 'ValidationRule's

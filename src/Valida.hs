@@ -7,8 +7,8 @@ module Valida
     , ValidationRule
     , Validator (runValidator)
       -- * Functions for building Valida data types
-    , verify
     , validate
+    , verify
     , vrule
     , (-?>)
       -- * Reassigning corresponding error to 'ValidationRule'
@@ -20,6 +20,7 @@ module Valida
     ) where
 
 import Control.Applicative (Applicative (liftA2))
+import Data.Bifunctor      (Bifunctor (first))
 
 import Valida.Combinators
 import Valida.Validation      (Validation (..))
@@ -58,9 +59,7 @@ Many combinators, like 'failureIf' and 'failureUnless', simply return the given 
 within /NonEmpty/ upon failure. You can use 'label' to override this return value.
 -}
 label :: (a -> e) -> ValidationRule x a -> ValidationRule e a
-label errF (ValidationRule rule) = vrule $ \x -> case rule x of
-    Failure _ -> Failure $ errF x
-    _         -> Success ()
+label errF (ValidationRule rule) = vrule $ (first . const . errF) <*> rule
 
 -- | A synonym for 'label' with its arguments flipped.
 infix 6 <?>

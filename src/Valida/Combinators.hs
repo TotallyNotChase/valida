@@ -306,7 +306,7 @@ negateRule err (ValidationRule rule) = vrule $ validationConst (Success ()) (Fai
 
 -- | Like 'negateRule' but uses /Unit/ as the 'ValidationRule' error type.
 negateRule' :: ValidationRule e a -> ValidationRule () a
-negateRule' (ValidationRule rule) = vrule $ ($ ()) . validationConst Failure Success . rule
+negateRule' (ValidationRule rule) = vrule $ ($ ()) . validationConst Success Failure . rule
 
 ---------------------------------------------------------------------
 -- Combining 'ValidationRule's

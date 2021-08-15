@@ -16,7 +16,8 @@ import qualified Test.Tasty.SmallCheck as SC
 
 import Valida (Validation (..), ValidationRule, Validator (runValidator), failureIf, failureIf', failureUnless,
                failureUnless', failures, falseRule, fromEither, label, negateRule, negateRule', partitionValidations,
-               satisfyAll, satisfyAny, successes, toEither, validate, validation, vrule, (-?>), (</>), (<?>))
+               satisfyAll, satisfyAny, successes, toEither, validate, validation, validationConst, vrule, (-?>), (</>),
+               (<?>))
 
 import Gen   (NonEmptyLQ, ValidationQ (..))
 import Utils (neSingleton)
@@ -149,6 +150,18 @@ testValidationUtils =
       (vCatamorphTest :: ValidationQ String Int -> (String -> Char) -> (Int -> Char) -> Bool)
   , QC.testProperty "(QC) validation f g (fromEither v) = either f g v"
       (eCatamorphTest :: Either String Int -> (String -> Char) -> (Int -> Char) -> Bool)
+  , QC.testProperty "(QC) either (const f) (const g) (toEither v) == validationConst f g v"
+      (vCatamorphCnstTest :: ValidationQ String Int -> Maybe Float -> Maybe Float -> Bool)
+  , SC.testProperty "(SC) either (const f) (const g) (toEither v) == validationConst f g v"
+      (vCatamorphCnstTest :: ValidationQ Bool Char -> String -> String -> Bool)
+  , QC.testProperty "(QC) validationConst f g (fromEither e) == either (const f) (const g) e"
+      (eCatamorphCnstTest :: Either String Int -> Maybe Float -> Maybe Float -> Bool)
+  , SC.testProperty "(SC) validationConst f g (fromEither e) == either (const f) (const g) e"
+      (eCatamorphCnstTest :: Either Bool Char -> String -> String -> Bool)
+  , QC.testProperty "(QC) validationConst f g v == validation (const f) (const g) v"
+      (vvCatamorphCnstTest :: ValidationQ String Int -> Maybe Float -> Maybe Float -> Bool)
+  , SC.testProperty "(SC) validationConst f g v == validation (const f) (const g) v"
+      (vvCatamorphCnstTest :: ValidationQ Bool Char -> String -> String -> Bool)
   , QC.testProperty "(QC) partitionValidations xs = (failures xs, successes xs)"
       (partitionTest :: [ValidationQ Int Char] -> Bool)
   , SC.testProperty "(SC) partitionValidations xs = (failures xs, successes xs)"
@@ -163,6 +176,12 @@ testValidationUtils =
     vCatamorphTest (ValidationQ v) f g = either f g (toEither v) == validation f g v
     eCatamorphTest :: Eq c => Either e a -> (e -> c) -> (a -> c) -> Bool
     eCatamorphTest e f g = validation f g (fromEither e) == either f g e
+    vCatamorphCnstTest :: Eq c => ValidationQ e a -> c -> c -> Bool
+    vCatamorphCnstTest (ValidationQ v) f g = either (const f) (const g) (toEither v) == validationConst f g v
+    eCatamorphCnstTest :: Eq c => Either e a -> c -> c -> Bool
+    eCatamorphCnstTest e f g = validationConst f g (fromEither e) == either (const f) (const g) e
+    vvCatamorphCnstTest :: Eq c => ValidationQ e a -> c -> c -> Bool
+    vvCatamorphCnstTest (ValidationQ v) f g = validationConst f g v == validation (const f) (const g) v
     partitionTest :: (Eq e, Eq a) => [ValidationQ e a] -> Bool
     partitionTest vqs = let xs = [v | ValidationQ v <- vqs]
         in partitionValidations xs == (failures xs, successes xs)

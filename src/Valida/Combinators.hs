@@ -423,6 +423,7 @@ prop> satisfyAny = foldr orElse falseRule
 -}
 satisfyAny :: (Foldable t, Semigroup e) => t (ValidationRule e a) -> ValidationRule e a
 satisfyAny = foldr1 (</>)
+{-# INLINABLE satisfyAny #-}
 {-# SPECIALIZE satisfyAny :: [ValidationRule (NonEmpty err) a] -> ValidationRule (NonEmpty err) a #-}
 {-# SPECIALIZE satisfyAny :: [ValidationRule () a] -> ValidationRule () a #-}
 {-# SPECIALIZE satisfyAny :: [ValidationRule [err] a] -> ValidationRule [err] a #-}
@@ -437,6 +438,7 @@ prop> satisfyAll = foldr andAlso mempty
 -}
 satisfyAll :: Foldable t => t (ValidationRule e a) -> ValidationRule e a
 satisfyAll = fold
+{-# INLINABLE satisfyAll #-}
 {-# SPECIALIZE satisfyAll :: [ValidationRule e a] -> ValidationRule e a #-}
 
 ---------------------------------------------------------------------

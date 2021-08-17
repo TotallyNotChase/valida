@@ -1,5 +1,20 @@
 {-# LANGUAGE Safe #-}
 
+{- |
+Module      : Valida.Combinators
+Description : Combinators and utilities for building and combining 'ValidationRule's.
+Copyright   : (c) TotallyNotChase, 2021
+License     : MIT
+Maintainer  : totallynotchase42@gmail.com
+Stability   : Stable
+Portability : Portable
+
+This module is re-exported by "Valida". You probably don't need to import this.
+
+This module exports the primitive, as well as utility, 'ValidationRule' combinators.
+As well as the 'orElse', 'andAlso', 'satisfyAny', and 'satisfyAll' functions, and some more utilities.
+-}
+
 module Valida.Combinators
     ( -- * Primitive 'NonEmpty' combinators
       failureIf

@@ -1,5 +1,20 @@
 {-# LANGUAGE Safe #-}
 
+{- |
+Module      : Valida
+Description : Simple applicative validation for product types, batteries included!
+Copyright   : (c) TotallyNotChase, 2021
+License     : MIT
+Maintainer  : totallynotchase42@gmail.com
+Stability   : Stable
+Portability : Portable
+
+This module exports the primary validator building functions. It also exports all of "Valida.Combinators".
+
+Refer to the hackage documentation for function reference and examples.
+You can also find examples in the README, and also in the github repo, within the examples directory.
+-}
+
 module Valida
     ( Selector
       -- * Primary data types

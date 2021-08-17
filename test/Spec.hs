@@ -193,10 +193,15 @@ testLabel =
       (labelTest :: Int -> Char -> String -> Bool)
   , SC.testProperty "(SC) Validator should yield relabeled ValidationRule error upon failure"
       (labelTest :: [Int] -> Bool -> Char -> Bool)
+  , QC.testProperty "(QC) Validator should yield relabeled Bool error upon failure"
+      (labelVTest :: Sum Int -> Maybe Char -> String -> Bool)
+  , SC.testProperty "(SC) Validator should yield relabeled Bool error upon failure"
+      (labelVTest :: [Int] -> Bool -> Char -> Bool)
   ]
   where
     labelTest :: (Eq a, Eq e) => a -> e1 -> e -> Bool
     labelTest inp err err' = (failureUnless (const False) err <?> err') `validatify` inp == Failure err'
+    labelVTest inp err err' = runValidator (validate (failureUnless (const False) err) <??> err') inp == Failure err'
 
 -- | Test validation errors being combined.
 testErrorPreservation :: [TestTree]

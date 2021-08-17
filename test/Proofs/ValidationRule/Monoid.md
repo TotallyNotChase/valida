@@ -12,10 +12,18 @@ data Validation e a = Failure e | Success a
 ```hs
 (<>) :: ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 ValidationRule rl1 <> ValidationRule rl2 = ValidationRule               {- (i) -}
+  (\x -> case rl1 x of
+    Failure e  -> Failure e
+    Success () -> rl2 x)
+{- __Simplified__ -}
+
+{- Original version:-
+
+ValidationRule rl1 <> ValidationRule rl2 = ValidationRule
   (\x -> case (rl1 x, rl2 x) of
-    (Failure e, _) -> Failure e                                         {- (i-a) -}
-    (_, Failure e) -> Failure e                                         {- (i-b) -}
-    _              -> Success ())                                       {- (i-c) -}
+    (Failure e, _) -> Failure e
+    (_, b) -> b)
+-}
 
 mempty :: ValidationRule e a
 mempty = ValidationRule (\x -> Success ())                              {- (ii) -}
@@ -35,37 +43,16 @@ mempty = ValidationRule (\x -> Success ())                              {- (ii) 
 = ValidationRule rl <> mempty
 = ValidationRule rl <> ValidationRule (\x -> Success ()) {- from (ii) -}
 = ValidationRule                                         {- from (i) -}
-    (\x -> case (rl x, (\x -> Success ()) x) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
+    (\x' -> case rl x' of
+      Failure e  -> Failure e
+      Success () -> ((\x -> Success ()) x'
     )
 = ValidationRule
-    (\x -> case (rl x, Success ()) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
+    (\x' -> case rl x' of
+      Failure e  -> Failure e
+      Success () -> Success ()
     )
-------------------- /Possibilities/ -----------------------
-= ValidationRule                                         {- 'rl x' evaluates to 'Success ()' -}
-    (\x -> case (Success (), Success ()) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
-    )
-= ValidationRule (\x -> Success ())
-= ValidationRule (\x -> rl x)
-(OR)
-= ValidationRule                                         {- 'rl x' evaluates to 'Failure e' -}
-    (\x -> case (Failure e, Success ()) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
-    )
-= ValidationRule (\x -> Failure e)
-= ValidationRule (\x -> rl x)
------------------------------------------------------------
-= ValidationRule (\x -> rl x)
+= ValidationRule (\x' -> rl x')
 = ValidationRule rl
 ```
 
@@ -85,37 +72,16 @@ mempty = ValidationRule (\x -> Success ())                              {- (ii) 
 = mempty <> ValidationRule rl
 = ValidationRule (\x -> Success ()) <> ValidationRule rl {- from (ii) -}
 = ValidationRule                                         {- from (i) -}
-    (\x -> case ((\x -> Success ()) x, rl x) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
+    (\x' -> case ((\x -> Success ()) x') of
+      Failure e  -> Failure e
+      Success () -> rl x'
     )
 = ValidationRule
-    (\x -> case (Success (), rl x) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
+    (\x' -> case (Success ()) of
+      Failure e  -> Failure e
+      Success () -> rl x'
     )
-------------------- /Possibilities/ -----------------------
-= ValidationRule                                         {- 'rl x' evaluates to 'Success ()' -}
-    (\x -> case (Success (), Success ()) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
-    )
-= ValidationRule (\x -> Success ())
-= ValidationRule (\x -> rl x)
-(OR)
-= ValidationRule                                         {- 'rl x' evaluates to 'Failure e' -}
-    (\x -> case (Success (), Failure e) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
-    )
-= ValidationRule (\x -> Failure e)
-= ValidationRule (\x -> rl x)
------------------------------------------------------------
-= ValidationRule (\x -> rl x)
+= ValidationRule (\x' -> rl x')
 = ValidationRule rl
 ```
 

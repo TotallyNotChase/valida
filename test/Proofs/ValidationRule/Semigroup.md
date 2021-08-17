@@ -12,10 +12,18 @@ data Validation e a = Failure e | Success a
 ```hs
 (<>) :: ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 ValidationRule rl1 <> ValidationRule rl2 = ValidationRule               {- (i) -}
+  (\x -> case rl1 x of
+    Failure e  -> Failure e
+    Success () -> rl2 x)
+{- __Simplified__ -}
+
+{- Original version:-
+
+ValidationRule rl1 <> ValidationRule rl2 = ValidationRule
   (\x -> case (rl1 x, rl2 x) of
-    (Failure e, _) -> Failure e                                         {- (i-a) -}
-    (_, Failure e) -> Failure e                                         {- (i-b) -}
-    _              -> Success ())                                       {- (i-c) -}
+    (Failure e, _) -> Failure e
+    (_, b) -> b)
+-}
 ```
 
 ## Associativity law
@@ -26,39 +34,29 @@ ValidationRule rl1 <> ValidationRule rl2 = ValidationRule               {- (i) -
 => x <> (y <> z)
 = ValidationRule rl1 <> (ValidationRule rl2 <> ValidationRule rl3)
 = ValidationRule rl1 <> ValidationRule                             {- from (i) -}
-    (\x -> case (rl2 x, rl3 x) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
-    )
+    (\x -> case rl2 x of
+      Failure e  -> Failure e
+      Success () -> rl3 x)
 = ValidationRule                                                   {- from (i) -}
-    (\x -> case
-      ( rl1 x
-      , case (rl2 x, rl3 x) of
-          (Failure e, _) -> Failure e
-          (_, Failure e) -> Failure e
-          _              -> Success ())
-      ) of
-        (Failure e, _) -> Failure e
-        (_, Failure e) -> Failure e
-        _              -> Success ()
+    (\x' -> case rl1 x' of
+      Failure e  -> Failure e
+      Success () -> (\x -> case rl2 x of
+        Failure e  -> Failure e
+        Success () -> rl3 x) x'
     )
-= ValidationRule                                                   {- Combine cases -}
-    (\x -> case
-      ( rl1 x
-      , (rl2 x, rl3 x)
-      ) of
-        (Failure e, _) -> Failure e
-        (_, (Failure e, _)) -> Failure e
-        (_, (_, Failure e)) -> Failure e
-        _              -> Success ()
+= ValidationRule
+    (\x' -> case rl1 x' of
+      Failure e  -> Failure e
+      Success () -> case rl2 x' of
+        Failure e  -> Failure e
+        Success () -> rl3 x'
     )
-= ValidationRule                                                   {- Flatten case arguments -}
-    (\x -> case (rl1 x, rl2 x, rl3 x) of
-      (Failure e, _, _) -> Failure e
-      (_, Failure e, _) -> Failure e
-      (_, _, Failure e) -> Failure e
-      _              -> Success ()
+= ValidationRule
+    (\x -> case rl1 x of
+      Failure e  -> Failure e
+      Success () -> case rl2 x of
+        Failure e  -> Failure e
+        Success () -> rl3 x
     )
 ```
 
@@ -67,41 +65,47 @@ ValidationRule rl1 <> ValidationRule rl2 = ValidationRule               {- (i) -
 => (x <> y) <> z
 = (ValidationRule rl1 <> ValidationRule rl2) <> ValidationRule rl3
 = ValidationRule                                                   {- from (i) -}
-    (\x -> case (rl1 x, rl2 x) of
-      (Failure e, _) -> Failure e
-      (_, Failure e) -> Failure e
-      _              -> Success ()
+    (\x -> case rl1 x of
+      Failure e  -> Failure e
+      Success () -> case rl2 x of
+        Failure e  -> Failure e
+        Success () -> Success ()
     ) <> ValidationRule rl3
-= = ValidationRule                                                   {- from (i) -}
-    (\x -> case
-      ( case (rl1 x, rl2 x) of
-          (Failure e, _) -> Failure e
-          (_, Failure e) -> Failure e
-          _              -> Success ())
-      , rl3 x
+= ValidationRule                                                   {- from (i) -}
+    (\x' ->
+      case (
+        (\x -> case rl1 x of
+          Failure e  -> Failure e
+          Success () -> rl2 x
+        ) x'
       ) of
-        (Failure e, _) -> Failure e
-        (_, Failure e) -> Failure e
-        _              -> Success ()
+        Failure e  -> Failure e
+        Success () -> rl3 x'
     )
-= ValidationRule                                                   {- Combine cases -}
-    (\x -> case
-      ( (rl1 x, rl2 x)
-      , rl3 x
+= ValidationRule
+    (\x' ->
+      case (
+        case rl1 x' of
+          Failure e  -> Failure e
+          Success () -> rl2 x'
       ) of
-        ((Failure e, _), _) -> Failure e
-        ((_, Failure e), _) -> Failure e
-        (_, Failure e) -> Failure e
-        _              -> Success ()
+        Failure e  -> Failure e
+        Success () -> rl3 x'
     )
-= ValidationRule                                                   {- Flatten case arguments -}
-    (\x -> case (rl1 x, rl2 x, rl3 x) of
-      (Failure e, _, _) -> Failure e
-      (_, Failure e, _) -> Failure e
-      (_, _, Failure e) -> Failure e
-      _              -> Success ()
+= ValidationRule
+    (\x' -> case rl1 x' of
+      Failure e  -> Failure e
+      Success () -> case rl2 x' of
+        Failure e  -> Failure e
+        Success () -> rl3 x'
     )
-=
+= ValidationRule
+    (\x -> case rl1 x of
+      Failure e  -> Failure e
+      Success () -> case rl2 x of
+        Failure e  -> Failure e
+        Success () -> rl3 x
+    )
 ```
 
 <ins>L.H.S = R.H.S</ins>

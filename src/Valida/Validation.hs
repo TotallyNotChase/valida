@@ -25,7 +25,8 @@ data Validation e a
   deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 {- |
-* 'fmap' maps given function over a 'Success' value, does nothing on 'Failure' value.
+
+[@fmap@] 'fmap' maps given function over a 'Success' value, does nothing on 'Failure' value.
 
 ==== __Examples__
 
@@ -42,8 +43,8 @@ instance Bifunctor Validation where
     bimap f g = validation (Failure . f) (Success . g)
 
 {- |
-* 'pure' is a 'Success' value.
-* '(<*>)' behaves similar to 'Either', but accumulates failures instead of stopping.
+[@pure@] 'pure' is a 'Success' value.
+[@(<*>)@] '(<*>)' behaves similar to 'Either', but accumulates failures instead of stopping.
 
 ==== __Examples__
 
@@ -69,7 +70,7 @@ instance Semigroup e => Applicative (Validation e) where
     {-# INLINEABLE (<*>) #-}
 
 {- |
-* '(<>)' behaves similar to the 'Either' semigroup. i.e Returns the first 'Success'. But also accumulates 'Failure's.
+[@(<>)@] This behaves similar to the 'Either' semigroup. i.e Returns the first 'Success'. But also accumulates 'Failure's.
 
 ==== __Examples__
 
@@ -92,7 +93,8 @@ instance Semigroup e => Semigroup (Validation e a) where
     {-# INLINEABLE (<>) #-}
 
 {- |
-* 'foldMap' maps given function over a 'Success' value, returns 'mempty' for a 'Failure' value.
+
+[@foldMap@] 'foldMap' maps given function over a 'Success' value, returns 'mempty' for a 'Failure' value.
 
 ==== __Examples__
 
@@ -105,7 +107,8 @@ instance Foldable (Validation e) where
     foldMap = validation (const mempty)
 
 {- |
-* In case of 'Success', 'traverse' applies given function to the inner value, and maps 'Success' over the result.
+
+[@traverse@] In case of 'Success', 'traverse' applies given function to the inner value, and maps 'Success' over the result.
 In case of 'Failure', 'traverse' returns 'Failure', wrapped in minimal context of the corresponding type ('pure').
 
 ==== __Examples__
@@ -119,11 +122,12 @@ instance Traversable (Validation e) where
     traverse f = validation (pure . Failure) (fmap Success . f)
 
 {- |
-* 'bifoldMap' is the same as 'validation'.
+
+[@bifoldMap@] 'bifoldMap' is the same as 'validation'.
 
 ==== __Examples__
 
-'biFoldMap' (and its more generalized version, 'validation') can eliminate the need to pattern match on 'Validation'.
+'bifoldMap' (and its more generalized version, 'validation') can eliminate the need to pattern match on 'Validation'.
 
 >>> import Data.Bifoldable
 >>> bifoldMap reverse (:[]) (Success 'c' :: Validation String Char)
@@ -140,7 +144,7 @@ instance Bitraversable Validation
 
 In case of 'Failure e', apply the first function to e; in case of 'Success a', apply the second function to a.
 
-This is a more generalized version of the 'biFoldMap' implementation.
+This is a more generalized version of the 'bifoldMap' implementation.
 
 ==== __Examples__
 

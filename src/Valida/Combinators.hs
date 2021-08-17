@@ -69,7 +69,7 @@ import Valida.ValidationRule (ValidationRule (..), vrule)
 -- Primitive 'NonEmpty' combinators
 ---------------------------------------------------------------------
 
-{- | Build a rule that /fails/ with given error __if the given rule succeeds__.
+{- | Build a rule that /fails/ with given error __if the given predicate succeeds__.
 
 prop> failureIf predc = failureUnless (not . predc)
 
@@ -85,7 +85,7 @@ Success (-1)
 failureIf :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
 failureIf predc = predToRule (not . predc) . neSingleton
 
-{- | Build a rule that /fails/ with given error __unless the given rule succeeds__.
+{- | Build a rule that /fails/ with given error __unless the given predicate succeeds__.
 
 prop> failureUnless predc = failureIf (not . predc)
 

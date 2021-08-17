@@ -20,7 +20,8 @@ type Selector a b = a -> b
 newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a } deriving (Typeable, Generic)
 
 {- |
-* 'fmap' maps given function over the 'Validation' result by re-using 'fmap' on it.
+
+[@fmap@] 'fmap' maps given function over the 'Validation' result by re-using 'fmap' on it.
 
 ==== __Examples__
 
@@ -33,8 +34,10 @@ instance Functor (Validator e inp) where
     fmap f (Validator v) = Validator $ fmap f . v
 
 {- |
-* 'pure' creates a 'Validator' that always yields given value wrapped in 'Success', ignoring its input.
-* '(<*>)' runs 2 validators to obtain the 2 'Validation' results and combines them with '(<*>)'.
+
+[@pure@] 'pure' creates a 'Validator' that always yields given value wrapped in 'Success', ignoring its input.
+
+[@(<*>)@] '(<*>)' runs 2 validators to obtain the 2 'Validation' results and combines them with '(<*>)'.
 This can be understood as-
 
     @
@@ -47,8 +50,8 @@ This can be understood as-
 
 >>> runValidator (pure 5) 42
 Success 5
->>> let v1 = validate $ failureIf (==2) "IsTwo"
->>> let v2 = validate $ failureIf even "IsEven"
+>>> let v1 = validate (failureIf (==2) "IsTwo")
+>>> let v2 = validate (failureIf even "IsEven")
 >>> runValidator (const <$> v1 <*> v2) 5
 Success 5
 >>> runValidator (const <$> v1 <*> v2) 4
@@ -66,15 +69,16 @@ instance Semigroup e => Applicative (Validator e inp) where
     {-# INLINEABLE (<*>) #-}
 
 {- |
-* '(<>)' applies input over both validator functions, and combines the 'Validation' results using '(<>)'.
+
+[@(<>)@] '(<>)' applies input over both validator functions, and combines the 'Validation' results using '(<>)'.
 
 ==== __Examples__
 
 This essentially reuses the '(<>)' impl of 'Validation'.
 i.e Returns the first 'Success'. But also accumulates 'Failure's.
 
->>> let v1 = validate $ failureIf (==2) "IsTwo"
->>> let v2 = validate $ failureIf even "IsEven"
+>>> let v1 = validate (failureIf (==2) "IsTwo")
+>>> let v2 = validate (failureIf even "IsEven")
 >>> runValidator (v1 <> v2) 5
 Success 5
 >>> runValidator (v1 <> v2) 4

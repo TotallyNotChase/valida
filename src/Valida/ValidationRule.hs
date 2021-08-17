@@ -26,18 +26,19 @@ newtype ValidationRule e a
   deriving (Typeable, Generic)
 
 {- |
-* '(<>)' creates a new `ValidationRule` that only succeeds when both given rule succeed.
+
+[@(<>)@] '(<>)' creates a new `ValidationRule` that only succeeds when both given rule succeed.
 Otherwise left-most failure is returned.
 
 ==== __Examples__
 
->>> runValidator (validate $ failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit") 5
+>>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit")) 5
 Success 5
->>> runValidator (validate $ failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit") 4
+>>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit")) 4
 Failure ("IsEven" :| [])
->>> runValidator (validate $ failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit") 15
+>>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit")) 15
 Failure ("IsDoubleDigit" :| [])
->>> runValidator (validate $ failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit") 12
+>>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit")) 12
 Failure ("IsEven" :| [])
 -}
 instance Semigroup (ValidationRule e a) where
@@ -47,7 +48,8 @@ instance Semigroup (ValidationRule e a) where
             (_, b) -> b
 
 {- |
-* 'mempty' is a 'ValidationRule' that always succeeds.
+
+[@mempty@] 'mempty' is a 'ValidationRule' that always succeeds.
 
 ==== __Examples__
 
@@ -61,9 +63,9 @@ instance Monoid (ValidationRule e a) where
 
 ==== __Examples__
 
->>> runValidator (validate $ vrule (\x -> if isDigit x then Success () else Failure "NotDigit")) 'a'
+>>> runValidator (validate (vrule (\x -> if isDigit x then Success () else Failure "NotDigit"))) 'a'
 Failure "NotDigit"
->>> runValidator (validate $ vrule (\x -> if isDigit x then Success () else Failure "NotDigit")) '5'
+>>> runValidator (validate (vrule (\x -> if isDigit x then Success () else Failure "NotDigit"))) '5'
 Success '5'
 -}
 vrule :: (a -> Validation e ()) -> ValidationRule e a

@@ -70,7 +70,7 @@ infix 5 -?>
 
 {- | Relabel a 'ValidationRule' with a different error.
 
-Many combinators, like 'failureIf' and 'failureUnless', simply return the given error value
+Many combinators, like 'failureIf'' and 'failureUnless'', simply return the given error value
 within /NonEmpty/ upon failure. You can use 'label' to override this return value.
 
 ==== __Examples__

@@ -21,6 +21,13 @@ newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a } 
 
 {- |
 * 'fmap' maps given function over the 'Validation' result by re-using 'fmap' on it.
+
+==== __Examples__
+
+>>> runValidator (fmap (+1) (validate $ failureIf (==2) "IsTwo")) 3
+Success 4
+>>> runValidator (fmap (+1) (validate $ failureIf (==2) "IsTwo")) 2
+Failure ("IsTwo" :| [])
 -}
 instance Functor (Validator e inp) where
     fmap f (Validator v) = Validator $ fmap f . v
@@ -35,6 +42,19 @@ This can be understood as-
     @
 
     i.e Run __ff__ and __v__ on the input, and compose the 'Validation' results with '(<*>)'.
+
+==== __Examples__
+
+>>> runValidator (pure 5) 42
+Success 5
+>>> let v1 = validate $ failureIf (==2) "IsTwo"
+>>> let v2 = validate $ failureIf even "IsEven"
+>>> runValidator (const <$> v1 <*> v2) 5
+Success 5
+>>> runValidator (const <$> v1 <*> v2) 4
+Failure ("IsEven" :| [])
+>>> runValidator (const <$> v1 <*> v2) 2
+Failure ("IsTwo" :| ["IsEven"])
 -}
 instance Semigroup e => Applicative (Validator e inp) where
     {-# SPECIALIZE instance Applicative (Validator (NonEmpty err) inp) #-}
@@ -47,6 +67,20 @@ instance Semigroup e => Applicative (Validator e inp) where
 
 {- |
 * '(<>)' applies input over both validator functions, and combines the 'Validation' results using '(<>)'.
+
+==== __Examples__
+
+This essentially reuses the '(<>)' impl of 'Validation'.
+i.e Returns the first 'Success'. But also accumulates 'Failure's.
+
+>>> let v1 = validate $ failureIf (==2) "IsTwo"
+>>> let v2 = validate $ failureIf even "IsEven"
+>>> runValidator (v1 <> v2) 5
+Success 5
+>>> runValidator (v1 <> v2) 4
+Success 4
+>>> runValidator (v1 <> v2) 2
+Failure ("IsTwo" :| ["IsEven"])
 -}
 instance Semigroup e => Semigroup (Validator e inp a) where
     {-# SPECIALIZE instance Semigroup (Validator (NonEmpty err) inp a) #-}

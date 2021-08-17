@@ -72,6 +72,15 @@ import Valida.ValidationRule (ValidationRule (..), vrule)
 {- | Build a rule that /fails/ with given error __if the given rule succeeds__.
 
 prop> failureIf predc = failureUnless (not . predc)
+
+==== __Examples__
+
+>>> runValidator (validate (failureIf (>0) "Positive")) 5
+Failure ("Positive" :| [])
+>>> runValidator (validate (failureIf (>0) "Positive")) 0
+Success 0
+>>> runValidator (validate (failureIf (>0) "Positive")) (-1)
+Success (-1)
 -}
 failureIf :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
 failureIf predc = predToRule (not . predc) . neSingleton
@@ -79,6 +88,15 @@ failureIf predc = predToRule (not . predc) . neSingleton
 {- | Build a rule that /fails/ with given error __unless the given rule succeeds__.
 
 prop> failureUnless predc = failureIf (not . predc)
+
+==== __Examples__
+
+>>> runValidator (validate (failureUnless (>0) "NonPositive")) 5
+Success 5
+>>> runValidator (validate (failureUnless (>0) "NonPositive")) 0
+Failure ("NonPositive" :| [])
+>>> runValidator (validate (failureUnless (>0) "NonPositive")) (-1)
+Failure ("NonPositive" :| [])
 -}
 failureUnless :: (a -> Bool) -> e -> ValidationRule (NonEmpty e) a
 failureUnless predc = predToRule predc . neSingleton
@@ -91,6 +109,15 @@ failureUnless predc = predToRule predc . neSingleton
 
 prop> failureIf' predc = failureUnless' (not . predc)
 prop> label (const (err :| [])) (failureIf' predc) = failureIf predc err
+
+==== __Examples__
+
+>>> runValidator (validate (failureIf' (>0))) 5
+Failure ()
+>>> runValidator (validate (failureIf' (>0))) 0
+Success 0
+>>> runValidator (validate (failureIf' (>0))) (-1)
+Success (-1)
 -}
 failureIf' :: (a -> Bool) -> ValidationRule () a
 failureIf' = flip predToRule () . (not .)
@@ -99,6 +126,15 @@ failureIf' = flip predToRule () . (not .)
 
 prop> failureUnless' predc = failureIf' (not . predc)
 prop> label (const (err :| [])) (failureUnless' predc) = failureUnless predc err
+
+==== __Examples__
+
+>>> runValidator (validate (failureUnless' (>0))) 5
+Success 5
+>>> runValidator (validate (failureUnless' (>0))) 0
+Failure ()
+>>> runValidator (validate (failureUnless' (>0))) (-1)
+Failure ()
 -}
 failureUnless' :: (a -> Bool) -> ValidationRule () a
 failureUnless' = flip predToRule ()
@@ -354,7 +390,18 @@ mustContain' x = failureUnless' $ elem x
 -- Negating 'ValidationRule'
 ---------------------------------------------------------------------
 
--- | Build a rule that succeeds if given rule fails and vice versa.
+{- | Build a rule that succeeds if given rule fails and vice versa.
+
+==== __Examples__
+
+>>> let rule = negateRule "NonPositive" (failureIf (>0) "Positive")
+>>> runValidator (validate rule) 5
+Success 5
+>>> runValidator (validate rule) 0
+Failure "NonPositive"
+>>> runValidator (validate rule) (-1)
+Failure "NonPositive"
+-}
 negateRule :: e -> ValidationRule e1 a -> ValidationRule e a
 negateRule err (ValidationRule rule) = vrule $ validationConst (Success ()) (Failure err) . rule
 
@@ -384,6 +431,18 @@ ValidationRule rule1 </> ValidationRule rule2 = vrule $ liftA2 (<>) rule1 rule2
 prop> rule1 `orElse` (rule2 `orElse` rule3) = (rule1 `orElse` rule2) `orElse` rule3
 prop> falseRule e `orElse` rule = rule
 prop> rule `orElse` falseRule e = rule
+
+==== __Examples__
+
+>>> let rule = failureIf (>0) "Positive" `orElse` failureIf even "Even"
+>>> runValidator (validate rule) 5
+Success 5
+>>> runValidator (validate rule) 4
+Failure ("Positive" :| ["Even"])
+>>> runValidator (validate rule) 0
+Success 0
+>>> runValidator (validate rule) (-1)
+Success (-1)
 -}
 orElse :: Semigroup e => ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 orElse = (</>)
@@ -393,6 +452,11 @@ orElse = (</>)
 
 prop> falseRule `orElse` rule = rule
 prop> rule `orElse` falseRule = rule
+
+==== __Examples__
+
+>>> runValidator (validate falseRule) 42
+Failure ()
 -}
 falseRule :: Monoid e => ValidationRule e a
 falseRule = vrule $ const $ Failure mempty
@@ -405,6 +469,16 @@ This is the same as the semigroup operation (i.e '(<>)') on 'ValidationRule'.
 prop> rule1 `andAlso` (rule2 `andAlso` rule3) = (rule1 `andAlso` rule2) `andAlso` rule3
 prop> mempty `andAlso` rule = rule
 prop> rule `andAlso` mempty = rule
+
+==== __Examples__
+
+>>> let rule = failureIf (>0) "Positive" `andAlso` failureIf even "Even"
+>>> runValidator (validate rule) 5
+Failure ("Positive" :| [])
+>>> runValidator (validate rule) (-2)
+Failure ("Even" :| [])
+>>> runValidator (validate rule) (-1)
+Success (-1)
 -}
 andAlso :: ValidationRule e a -> ValidationRule e a -> ValidationRule e a
 andAlso = (<>)
@@ -444,6 +518,15 @@ satisfyAll = fold
 {- | Build a rule that runs given rule only if input is 'Just'.
 
 Yields 'Success' when input is 'Nothing.
+
+==== __Examples__
+
+>>> runValidator (validate (optionally (failureIf even "Even"))) (Just 5)
+Success (Just 5)
+>>> runValidator (validate (optionally (failureIf even "Even"))) (Just 6)
+Failure ("Even" :| [])
+>>> runValidator (validate (optionally (failureIf even "Even"))) Nothing
+Success Nothing
 -}
 optionally :: ValidationRule e a -> ValidationRule e (Maybe a)
 optionally (ValidationRule rule) = vrule $ maybe (Success ()) rule

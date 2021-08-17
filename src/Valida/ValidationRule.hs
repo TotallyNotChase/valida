@@ -28,20 +28,43 @@ newtype ValidationRule e a
 {- |
 * '(<>)' creates a new `ValidationRule` that only succeeds when both given rule succeed.
 Otherwise left-most failure is returned.
+
+==== __Examples__
+
+>>> runValidator (validate $ failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit") 5
+Success 5
+>>> runValidator (validate $ failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit") 4
+Failure ("IsEven" :| [])
+>>> runValidator (validate $ failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit") 15
+Failure ("IsDoubleDigit" :| [])
+>>> runValidator (validate $ failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit") 12
+Failure ("IsEven" :| [])
 -}
 instance Semigroup (ValidationRule e a) where
     ValidationRule rl1 <> ValidationRule rl2 = ValidationRule
         $ \x -> case (rl1 x, rl2 x) of
             (f@(Failure _), _) -> f
-            (_, f@(Failure _)) -> f
-            _                  -> Success ()
+            (_, b) -> b
 
 {- |
 * 'mempty' is a 'ValidationRule' that always succeeds.
+
+==== __Examples__
+
+>>> runValidator (validate mempty) 'a'
+Success 'a'
 -}
 instance Monoid (ValidationRule e a) where
     mempty = ValidationRule $ const $ Success ()
 
--- | Low level function to manually build a `ValidationRule`. You should use the combinators instead.
+{- | Low level function to manually build a `ValidationRule`. You should use the combinators instead.
+
+==== __Examples__
+
+>>> runValidator (validate $ vrule (\x -> if isDigit x then Success () else Failure "NotDigit")) 'a'
+Failure "NotDigit"
+>>> runValidator (validate $ vrule (\x -> if isDigit x then Success () else Failure "NotDigit")) '5'
+Success '5'
+-}
 vrule :: (a -> Validation e ()) -> ValidationRule e a
 vrule = ValidationRule

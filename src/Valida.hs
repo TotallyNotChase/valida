@@ -36,6 +36,24 @@ The 'Validator` first runs given __selector__ on its input to obtain the validat
 'ValidationRule' on the target.
 
 If validation is successful, the validation target is put into the 'Validation' result.
+
+==== __Examples__
+
+This is the primary function for building validators for your record types.
+To validate a pair, the most basic record type, such that the first element is a non empty string, and the second
+element is a number greater than 9, you can use:
+
+>>> let pairValidator = (,) <$> verify (notEmpty "EmptyString") fst <*> verify (failureIf (<10) "LessThan10") snd
+
+You can then run the validator on your input, using 'runValidator':
+>>> runValidator pairValidator ("foo", 12)
+Success ("foo",12)
+>>> runValidator pairValidator ("", 12)
+Failure ("EmptyString" :| [])
+>>> runValidator pairValidator ("foo", 9)
+Failure ("LessThan10" :| [])
+>>> runValidator pairValidator ("", 9)
+Failure ("EmptyString" :| ["LessThan10"])
 -}
 verify :: ValidationRule e b -> Selector a b -> Validator e a b
 verify (ValidationRule rule) selector = Validator $ liftA2 (<$) selector (rule . selector)
@@ -54,6 +72,16 @@ infix 5 -?>
 
 Many combinators, like 'failureIf' and 'failureUnless', simply return the given error value
 within /NonEmpty/ upon failure. You can use 'label' to override this return value.
+
+==== __Examples__
+
+>>> let rule = label "NotEven" (failureUnless' even)
+>>> runValidator (validate rule) 1
+Failure "NotEven"
+
+>>> let rule = label "DefinitelyNotEven" (failureUnless even "NotEven")
+>>> runValidator (validate rule) 1
+Failure "DefinitelyNotEven"
 -}
 label :: e -> ValidationRule x a -> ValidationRule e a
 label err (ValidationRule rule) = vrule $ first (const err) . rule
@@ -68,7 +96,18 @@ infix 6 <?>
 -- Reassigning corresponding error to 'Validator'.
 ---------------------------------------------------------------------
 
--- | Relabel a 'Validator' with a different error.
+{- | Relabel a 'Validator' with a different error.
+
+==== __Examples__
+
+>>> let validator = labelV "NotEven" (validate (failureUnless' even))
+>>> runValidator validator 1
+Failure "NotEven"
+
+>>> let validator = labelV "DefinitelyNotEven" (validate (failureUnless even "NotEven"))
+>>> runValidator validator 1
+Failure "DefinitelyNotEven"
+-}
 labelV :: e -> Validator x inp a -> Validator e inp a
 labelV err (Validator v) = Validator $ first (const err) . v
 

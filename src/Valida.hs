@@ -48,21 +48,18 @@ infix 5 -?>
 -- Reassigning corresponding error to 'ValidationRule'.
 ---------------------------------------------------------------------
 
-{- | Relabel a 'ValidationRule' with a different error, obtained from an "error generator".
-
-An "error generator" is a function that takes the validation target, that has failed validation, and returns a value
-representing error.
+{- | Relabel a 'ValidationRule' with a different error.
 
 Many combinators, like 'failureIf' and 'failureUnless', simply return the given error value
 within /NonEmpty/ upon failure. You can use 'label' to override this return value.
 -}
-label :: (a -> e) -> ValidationRule x a -> ValidationRule e a
-label errF (ValidationRule rule) = vrule $ (first . const . errF) <*> rule
+label :: e -> ValidationRule x a -> ValidationRule e a
+label err (ValidationRule rule) = vrule $ first (const err) . rule
 
 -- | A synonym for 'label' with its arguments flipped.
 infix 6 <?>
 
-(<?>) :: ValidationRule x a -> (a -> e) -> ValidationRule e a
+(<?>) :: ValidationRule x a -> e -> ValidationRule e a
 (<?>) = flip label
 
 {- | Build a basic validator from a 'ValidationRule'.

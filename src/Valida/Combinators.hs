@@ -379,8 +379,6 @@ ValidationRule rule1 </> ValidationRule rule2 = vrule $ liftA2 (<>) rule1 rule2
 {-# SPECIALIZE (</>) :: ValidationRule () a -> ValidationRule () a -> ValidationRule () a #-}
 {-# SPECIALIZE (</>) :: ValidationRule [err] a -> ValidationRule [err] a -> ValidationRule [err] a #-}
 
-infixr 5 `orElse`
-
 {- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
 
 prop> rule1 `orElse` (rule2 `orElse` rule3) = (rule1 `orElse` rule2) `orElse` rule3
@@ -399,8 +397,6 @@ prop> rule `orElse` falseRule = rule
 falseRule :: Monoid e => ValidationRule e a
 falseRule = vrule $ const $ Failure mempty
 {-# INLINABLE falseRule #-}
-
-infixr 6 `andAlso`
 
 {- | Build a rule that /only succeeds/ if __both__ of the given rules succeed. The very first failure is yielded.
 

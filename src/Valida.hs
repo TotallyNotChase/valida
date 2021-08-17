@@ -28,8 +28,6 @@ import Valida.ValidationRule  (ValidationRule (..), vrule)
 import Valida.ValidationUtils
 import Valida.Validator       (Selector, Validator (..))
 
-infix 5 `verify`
-
 {- | Build a validator from a 'ValidationRule' and a 'Selector'.
 
 The 'Validator` first runs given __selector__ on its input to obtain the validation target. Then, it runs the

@@ -11,9 +11,11 @@ module Valida
     , verify
     , vrule
     , (-?>)
-      -- * Reassigning corresponding error to 'ValidationRule'
+      -- * Reassigning errors
     , label
+    , labelV
     , (<?>)
+    , (<??>)
       -- | Re-exports of "Valida.Combinators"
     , module Valida.Combinators
     , module Valida.ValidationUtils
@@ -61,6 +63,20 @@ infix 6 <?>
 
 (<?>) :: ValidationRule x a -> e -> ValidationRule e a
 (<?>) = flip label
+
+---------------------------------------------------------------------
+-- Reassigning corresponding error to 'Validator'.
+---------------------------------------------------------------------
+
+-- | Relabel a 'Validator' with a different error.
+labelV :: e -> Validator x inp a -> Validator e inp a
+labelV err (Validator v) = Validator $ first (const err) . v
+
+-- | A synonym for 'labelV' with its arguments flipped.
+infix 6 <??>
+
+(<??>) :: Validator x inp a -> e -> Validator e inp a
+(<??>) = flip labelV
 
 {- | Build a basic validator from a 'ValidationRule'.
 

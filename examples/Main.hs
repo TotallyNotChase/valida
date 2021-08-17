@@ -46,7 +46,7 @@ inpFormValidator = InpForm
     <*> inpPhone -?> optionally
         ( lengthWithin (14, 15) InvalidPhLen
         <> label
-            (const $ neSingleton IncorrectPhFormat)
+            (neSingleton IncorrectPhFormat)
             -- Either Intl format or NA format
             (failureUnless' isCorrectPhIntl </> failureUnless' isCorrectPhNA)
         )

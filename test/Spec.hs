@@ -17,7 +17,7 @@ import qualified Test.Tasty.SmallCheck as SC
 import Valida (Validation (..), ValidationRule, Validator (runValidator), failureIf, failureIf', failureUnless,
                failureUnless', failures, falseRule, fromEither, label, negateRule, negateRule', partitionValidations,
                satisfyAll, satisfyAny, successes, toEither, validate, validation, validationConst, vrule, (-?>), (</>),
-               (<?>))
+               (<?>), (<??>))
 
 import Gen   (NonEmptyLQ, ValidationQ (..))
 import Utils (neSingleton)
@@ -99,7 +99,7 @@ testPrimCombs'' =
       testValidator (failureUnless' or, "Has True", [False, False, False], Failure)
   ]
   where
-    testValidator ~(rule, err, inp, expct) = (rule <?> const err) `validatify` inp @?= expct err
+    testValidator ~(rule, err, inp, expct) = (rule <?> err) `validatify` inp @?= expct err
 
 -- | Test multiple validators combined.
 testValidatorCollc :: [TestTree]
@@ -186,23 +186,17 @@ testValidationUtils =
     partitionTest vqs = let xs = [v | ValidationQ v <- vqs]
         in partitionValidations xs == (failures xs, successes xs)
 
--- | Test the label function.
+-- | Test the label and labelV functions.
 testLabel :: [TestTree]
 testLabel =
-  [ QC.testProperty "(QC) Validator should yield relabeled error upon failure"
-      (relabelTest :: Int -> Char -> String -> Bool)
-  , SC.testProperty "(SC) Validator should yield relabeled error upon failure"
-      (relabelTest :: [Int] -> Bool -> Char -> Bool)
-  , QC.testProperty "(QC) Error generator function during relabeling should have access to input"
-      (errConstructTest :: [Int] -> ([Int] -> String) -> Bool)
-  , SC.testProperty "(SC) Error generator function during relabeling should have access to input"
-      (errConstructTest :: Bool -> (Bool -> Char) -> Bool)
+  [ QC.testProperty "(QC) Validator should yield relabeled ValidationRule error upon failure"
+      (labelTest :: Int -> Char -> String -> Bool)
+  , SC.testProperty "(SC) Validator should yield relabeled ValidationRule error upon failure"
+      (labelTest :: [Int] -> Bool -> Char -> Bool)
   ]
   where
-    relabelTest :: (Eq a, Eq e) => a -> e1 -> e -> Bool
-    relabelTest inp err err' = (failureUnless (const False) err <?> const err') `validatify` inp == Failure err'
-    errConstructTest :: (Eq a, Eq e) => a -> (a -> e) -> Bool
-    errConstructTest inp errF = (failureUnless (const False) () <?> errF) `validatify` inp == Failure (errF inp)
+    labelTest :: (Eq a, Eq e) => a -> e1 -> e -> Bool
+    labelTest inp err err' = (failureUnless (const False) err <?> err') `validatify` inp == Failure err'
 
 -- | Test validation errors being combined.
 testErrorPreservation :: [TestTree]
@@ -213,7 +207,7 @@ testErrorPreservation =
   where
     helper :: (Traversable t, Monoid e, Eq e, Eq (t inp)) => inp -> t e -> Bool
     helper inp errs = runValidator
-        (traverse (\e -> validate $ label (const e) $ failureUnless' (const False)) errs)
+        (traverse (\e -> validate $ label e $ failureUnless' (const False)) errs)
         inp == Failure (fold errs)
 
 -- | Test the relation between NonEmpty and Unit combinators.
@@ -223,24 +217,24 @@ testNEUnitRelation =
       ((\predc inp err -> QC.classify (predc inp) "Significant"
         $ QC.classify (not $ predc inp) "Trivial"
         $ failureIf predc err `validatify` inp
-        == (failureIf' predc <?> const (neSingleton err)) `validatify` inp
+        == (failureIf' predc <?> neSingleton err) `validatify` inp
        ) :: (Char -> Bool) -> Char -> String -> QC.Property
       )
   , SC.testProperty "(SC) failureIf p err = label (const (neSingleton err)) (failureIf' p)"
       ((\predc inp err -> failureIf predc err `validatify` inp
-        == (failureIf' predc <?> const (neSingleton err)) `validatify` inp
+        == (failureIf' predc <?> neSingleton err) `validatify` inp
        ) :: (Bool -> Bool) -> Bool -> Int -> Bool
       )
   , QC.testProperty "(QC) failureUnless p err = label (const (neSingleton err)) (failureUnless' p)"
       ((\predc inp err -> QC.classify (not $ predc inp) "Significant"
         $ QC.classify (predc inp) "Trivial"
         $ failureUnless predc err `validatify` inp
-        == (failureUnless' predc <?> const (neSingleton err)) `validatify` inp
+        == (failureUnless' predc <?> neSingleton err) `validatify` inp
        ) :: (Char -> Bool) -> Char -> String -> QC.Property
       )
   , SC.testProperty "(SC) failureUnless p err = label (const (neSingleton err)) (failureUnless' p)"
       ((\predc inp err -> failureUnless predc err `validatify` inp
-        == (failureUnless' predc <?> const (neSingleton err)) `validatify` inp
+        == (failureUnless' predc <?> neSingleton err) `validatify` inp
        ) :: (Bool -> Bool) -> Bool -> Int -> Bool
       )
   ]
@@ -257,7 +251,7 @@ testNegateRule =
     helper :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
     helper ~(predc, err) x = let rule = predToVRule err predc
         in negateRule err (negateRule err rule) `validatify` x == rule `validatify` x
-        && negateRule' (negateRule' rule) `validatify` x == (rule <?> const ()) `validatify` x
+        && negateRule' (negateRule' rule) `validatify` x == (rule <?> ()) `validatify` x
 
 -- | Test the relation between failureIf and failureUnless.
 testIfUnlessRelation :: [TestTree]

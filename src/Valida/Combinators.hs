@@ -136,7 +136,7 @@ Success 0
 Success (-1)
 -}
 failureIf' :: (a -> Bool) -> ValidationRule () a
-failureIf' = flip predToRule () . (not .)
+failureIf' predc = predToRule (not . predc) ()
 
 {- | Like 'failureUnless' but uses /Unit/ as the 'ValidationRule' error type.
 

@@ -6,8 +6,6 @@ module Valida.Validator
     , Validator (..)
     ) where
 
-import Control.Applicative (Applicative (liftA2))
-
 import Data.List.NonEmpty (NonEmpty)
 import Data.Typeable      (Typeable)
 
@@ -68,7 +66,7 @@ instance Semigroup e => Applicative (Validator e inp) where
     {-# SPECIALIZE instance Applicative (Validator [err] inp) #-}
     pure = Validator . const . Success
     {-# INLINEABLE pure #-}
-    Validator ff <*> Validator v = Validator $ liftA2 (<*>) ff v
+    Validator ff <*> Validator v = Validator $ \x -> ff x <*> v x
     {-# INLINEABLE (<*>) #-}
 
 {- |

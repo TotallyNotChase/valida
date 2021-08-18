@@ -36,8 +36,6 @@ module Valida
     , module Valida.ValidationUtils
     ) where
 
-import Control.Applicative (Applicative (liftA2))
-
 import Data.Bifunctor (Bifunctor (first))
 
 import Valida.Combinators
@@ -72,7 +70,7 @@ Failure ("LessThan10" :| [])
 Failure ("EmptyString" :| ["LessThan10"])
 -}
 verify :: ValidationRule e b -> Selector a b -> Validator e a b
-verify (ValidationRule rule) selector = Validator $ liftA2 (<$) selector (rule . selector)
+verify (ValidationRule rule) selector = Validator $ \x -> selector x <$ rule (selector x)
 
 -- | A synonym for 'verify' with its arguments flipped.
 infix 5 -?>

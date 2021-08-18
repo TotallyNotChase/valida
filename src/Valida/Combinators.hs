@@ -271,10 +271,10 @@ valueBelow n = failureUnless (<n)
 {- | Build an 'inRange' rule for value.
 
 prop> valueWithin (min, max) = minValueOf min `andAlso` maxValueOf max
-prop> valueWithin r = failureUnless (inRange r)
+prop> valueWithin (min, max) = failureUnless (\x -> m <= x && x <= n)
 -}
-valueWithin :: Ix a => (a, a) -> e -> ValidationRule (NonEmpty e) a
-valueWithin r = failureUnless $ inRange r
+valueWithin :: Ord a => (a, a) -> e -> ValidationRule (NonEmpty e) a
+valueWithin (m, n) = failureUnless $ \x -> m <= x && x <= n
 {-# INLINABLE valueWithin #-}
 {-# SPECIALIZE valueWithin :: (Int, Int) -> e -> ValidationRule (NonEmpty e) Int #-}
 
@@ -379,8 +379,8 @@ valueBelow' n = failureUnless' (<n)
 {-# INLINABLE valueBelow' #-}
 
 -- | Like 'valueWithin' but uses /Unit/ as the 'ValidationRule' error type.
-valueWithin' :: Ix a => (a, a) -> ValidationRule () a
-valueWithin' r = failureUnless' $ inRange r
+valueWithin' :: Ord a => (a, a) -> ValidationRule () a
+valueWithin' (m, n) = failureUnless' $ \x -> m <= x && x <= n
 {-# INLINABLE valueWithin' #-}
 {-# SPECIALIZE valueWithin' :: (Int, Int) -> ValidationRule () Int #-}
 

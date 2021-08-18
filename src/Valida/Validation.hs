@@ -14,7 +14,8 @@ import Data.Bitraversable (Bitraversable)
 import Data.Data          (Data)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Typeable      (Typeable)
-import GHC.Generics       (Generic)
+
+import GHC.Generics (Generic)
 
 -- | Like 'Either', but accumulates failures upon applicative composition.
 data Validation e a

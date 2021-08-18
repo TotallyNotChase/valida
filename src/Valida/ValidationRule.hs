@@ -7,7 +7,8 @@ module Valida.ValidationRule
     ) where
 
 import Data.Typeable (Typeable)
-import GHC.Generics  (Generic)
+
+import GHC.Generics (Generic)
 
 import Valida.Validation (Validation (..))
 
@@ -32,20 +33,20 @@ Otherwise left-most failure is returned.
 
 ==== __Examples__
 
->>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit")) 5
+>>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "GreaterThan9")) 5
 Success 5
->>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit")) 4
+>>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "GreaterThan9")) 4
 Failure ("IsEven" :| [])
->>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit")) 15
-Failure ("IsDoubleDigit" :| [])
->>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "IsDoubleDigit")) 12
+>>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "GreaterThan9")) 15
+Failure ("GreaterThan9" :| [])
+>>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "GreaterThan9")) 12
 Failure ("IsEven" :| [])
 -}
 instance Semigroup (ValidationRule e a) where
     ValidationRule rl1 <> ValidationRule rl2 = ValidationRule
         $ \x -> case (rl1 x, rl2 x) of
             (f@(Failure _), _) -> f
-            (_, b) -> b
+            (_, b)             -> b
 
 {- |
 

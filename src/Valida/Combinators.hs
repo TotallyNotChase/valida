@@ -71,10 +71,11 @@ module Valida.Combinators
     ) where
 
 import Control.Applicative (Applicative (liftA2))
-import Data.Bool           (bool)
-import Data.Foldable       (Foldable (fold))
-import Data.Ix             (Ix (inRange))
-import Data.List.NonEmpty  (NonEmpty)
+
+import Data.Bool          (bool)
+import Data.Foldable      (Foldable (fold))
+import Data.Ix            (Ix (inRange))
+import Data.List.NonEmpty (NonEmpty)
 
 import Valida.Utils          (neSingleton)
 import Valida.Validation     (Validation (..), validationConst)

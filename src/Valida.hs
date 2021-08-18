@@ -37,7 +37,8 @@ module Valida
     ) where
 
 import Control.Applicative (Applicative (liftA2))
-import Data.Bifunctor      (Bifunctor (first))
+
+import Data.Bifunctor (Bifunctor (first))
 
 import Valida.Combinators
 import Valida.Validation      (Validation (..))

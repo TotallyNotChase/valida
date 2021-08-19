@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           valida
 version:        0.1.0
-synopsis:       Simple, applicative input validation combinators.
+synopsis:       Simple applicative validation for product types, batteries included!
 description:    Please see the README on GitHub at <https://github.com/TotallyNotChase/valida#readme>
 category:       Validation, Data
 homepage:       https://github.com/TotallyNotChase/valida#readme

@@ -192,7 +192,7 @@ Failure ()
 ```
 
 ## Wait, couldn't this be done using contravariant functors?
-Yes, very similar! The concept of *keeping the input of a `Validator`* set to the same product type, but *letting it validate a specific field* of said input, can be generalized to contravariant functors. The `Validator` type looks like- `Validator e inp a`, to keep applicative composition working, the `inp` needs to stay the same - but each validator within said composition should also be able to *consume* a specific part of the `inp`. `ValidationRule` itself, is the typical example of a contravariant functor as well. It's essentially a specialized, predicate function- `a -> Validation e ()`. The `verify` function simply combines these 2 *potentially generalizable* contravariant functors, into a very specialized usecase.
+Yes! The concept of *keeping the input of a `Validator`* set to the same product type, but *letting it validate a specific field* of said input, can be generalized to contravariant functors. The `Validator` type looks like- `Validator e inp a`, to keep applicative composition working, the `inp` needs to stay the same - but each validator within said composition should also be able to *consume* a specific part of the `inp`. `ValidationRule` itself, is the typical example of a contravariant functor as well. It's essentially a specialized predicate function- `a -> Validation e ()`. The `verify` function simply combines these 2 *potentially generalizable* contravariant functors, into a very specialized usecase.
 
 I do think adding instances for actual generalized contravariant functors/profunctors for `ValidationRule` and `Validator`, *could* be more powerful, while also being able to provide the same specialized functions. However, I've refrained from doing so as I didn't want to pull in the extra dependencies. I think the separation of `ValidationRule` and `Validator`, combined with the provided functions, *should* be able to reliably, and elegantly model any scenario of building a validator. I have yet to find a usecase where the generalized contravariant instances *would be significantly useful*. But it could certainly be more idiomatic for haskell. I may consider creating a package that *does* go the contravariant/profunctor route though.
 
@@ -202,8 +202,13 @@ The concept of the `Validation` data type used in this package isn't new. It's a
 * [validation](https://hackage.haskell.org/package/validation)
 * [validation-selective](https://hackage.haskell.org/package/validation-selective)
 
-`Valida` aims to be a minimal, batteries included, "version" of `Data.Validation` (from validation) and `Validation` (from `validation-selective`). It borrows many philosophies from said packages, and aims to provide a convenient, minimal way to model the common usecases of them.
+`Valida` aims to be a minimal in terms of dependencies, but batteries included in terms of API. It borrows many philosophies from `Data.Validation` (from `validation`) and `Validation` (from `validation-selective`), and aims to provide a convenient, minimal way to model the common usecases of them.
 
 The `verify` function, combined with the `ValidationRule` combinators, and the parsec-esque `Validator` aims to assist in easily modeling typical validation usecases without too much boilerplate. The core idea, really, is [contravariance](#wait-couldnt-this-be-done-using-contravariant-functors) - the typical usecases, especially when validating product types (the most common target of validation), simply showcases contravariant functors.
 
 In essence, the validation style itself, is designed to look like [forma](https://hackage.haskell.org/package/forma). Though the actual types, and core concepts are significantly different.
+
+The goals can be summed up in-
+* Minimal - **Zero dependencies** apart from `base`.
+* Batteries included - `ValidationRule` combinators for almost every scenario.
+* Validation without the boiler plate - a highly specialized usage of contravariant functors to conveniently model the common validation usecases, without extra boilerplate.

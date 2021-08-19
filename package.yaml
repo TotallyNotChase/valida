@@ -10,7 +10,7 @@ extra-source-files:
 - README.md
 - ChangeLog.md
 
-synopsis:            Simple, applicative input validation combinators.
+synopsis:            Simple applicative validation for product types, batteries included!
 category:            Validation, Data
 
 description:         Please see the README on GitHub at <https://github.com/TotallyNotChase/valida#readme>

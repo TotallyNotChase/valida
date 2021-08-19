@@ -3,6 +3,11 @@ Simple, elegant, applicative validation for product types - batteries included!
 
 Read the documentation on [hackage]().
 
+# Highlights
+* Minimal - *Zero dependencies* apart from `base`.
+* Batteries included - `ValidationRule` combinators for almost every scenario.
+* Validation without the boiler plate - a highly specialized usage of contravariant functors to conveniently model the common validation usecases, without extra boilerplate.
+
 # Quick Taste
 ```hs
 import Data.List.NonEmpty (NonEmpty)
@@ -158,29 +163,6 @@ Success 15
 Failure ("IsEven" :| ["IsDivisbleBy3"])
 ```
 
-The following rule only succeeds if the input **is not even**, *and* **not divisble by 3**.
-```hs
-rule :: ValidationRule (NonEmpty String) Int
-rule = failureIf even "IsEven" `andAlso` failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
-```
-(OR)
-```hs
-rule :: ValidationRule (NonEmpty String) Int
-rule = failureIf even "IsEven" <> failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
-```
-
-Usages-
-```hs
->>> runValidator (validate rule) 5
-Success 5
->>> runValidator (validate rule) 4
-Failure ("IsEven" :| [])
->>> runValidator (validate rule) 15
-Failure ("IsDivisbleBy3" :| [])
->>> runValidator (validate rule) 6
-Failure ("IsEven" :| [])
-```
-
 ### Combining a foldable of `ValidationRule`s
 You can combine a foldable of `ValidationRule`s using `satisfyAll` and `satisfyAny`. `satisfyAll` folds using `andAlso`/`<>`, while `satisfyAny` folds using `orElse`/`</>`.
 
@@ -207,8 +189,3 @@ The concept of the `Validation` data type used in this package isn't new. It's a
 The `verify` function, combined with the `ValidationRule` combinators, and the parsec-esque `Validator` aims to assist in easily modeling typical validation usecases without too much boilerplate. The core idea, really, is [contravariance](#wait-couldnt-this-be-done-using-contravariant-functors) - the typical usecases, especially when validating product types (the most common target of validation), simply showcases contravariant functors.
 
 In essence, the validation style itself, is designed to look like [forma](https://hackage.haskell.org/package/forma). Though the actual types, and core concepts are significantly different.
-
-The goals can be summed up in-
-* Minimal - **Zero dependencies** apart from `base`.
-* Batteries included - `ValidationRule` combinators for almost every scenario.
-* Validation without the boiler plate - a highly specialized usage of contravariant functors to conveniently model the common validation usecases, without extra boilerplate.

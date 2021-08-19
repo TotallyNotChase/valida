@@ -44,4 +44,6 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - happy
+    - smallcheck
     - valida

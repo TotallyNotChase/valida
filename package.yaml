@@ -34,7 +34,7 @@ library:
   - Valida
   - Valida.Combinators
   ghc-options:
-  - -O3
+  - -O2
 
 tests:
   valida-test:

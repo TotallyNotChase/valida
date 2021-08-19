@@ -173,6 +173,27 @@ Although, highly inadvisable and generally not useful in serious code, you may u
 Failure ()
 ```
 
+## Re-assigning errors
+Using the `label`/`<?>` and `labelV`/`<??>` functions, you can use override the errors `ValidationRule`s and `Validator`s yield.
+
+For example, to re assign the error on a `ValidationRule`-
+```hs
+label "IsEven" (failureIf even "Foo")
+```
+(OR)
+```hs
+failureIf even "Foo" <?> "IsEven"
+```
+
+This is useful with `ValidationRule`s that use unit as their error type. You can create a `ValidationRule`, skip assigning an error to it - and label a specific error when you need it later.
+```hs
+label "IsEven" (failureIf' even)
+```
+
+Re-labeled `ValidationRule`s will yield the newly assigned error value when the rule is not satisfied.
+
+Similarly, `labelV` (or `<??>`) can be used to relabel the error value of an entire `Validator`.
+
 ## Wait, couldn't this be done using contravariant functors?
 Yes! The concept of *keeping the input of a `Validator`* set to the same product type, but *letting it validate a specific field* of said input, can be generalized to contravariant functors. The `Validator` type looks like- `Validator e inp a`, to keep applicative composition working, the `inp` needs to stay the same - but each validator within said composition should also be able to *consume* a specific part of the `inp`. `ValidationRule` itself, is the typical example of a contravariant functor as well. It's essentially a specialized predicate function- `a -> Validation e ()`. The `verify` function simply combines these 2 *potentially generalizable* contravariant functors, into a very specialized usecase.
 

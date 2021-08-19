@@ -28,8 +28,8 @@ source-repository head
 library
   exposed-modules:
       Valida
-  other-modules:
       Valida.Combinators
+  other-modules:
       Valida.Utils
       Valida.Validation
       Valida.ValidationRule

@@ -16,7 +16,7 @@ category:            Validation, Data
 description:         Please see the README on GitHub at <https://github.com/TotallyNotChase/valida#readme>
 
 dependencies:
-- base >= 4.7 && < 5
+- base >= 4.13 && < 5
 
 ghc-options:
 - -Wall
@@ -35,17 +35,6 @@ library:
   - Valida.Combinators
   ghc-options:
   - -O3
-
-executables:
-  valida-examples-exe:
-    main:                Main.hs
-    source-dirs:         examples
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - valida
 
 tests:
   valida-test:

@@ -1,0 +1,15 @@
+name:                valida-example
+author:              "Chase"
+
+dependencies:
+- base >= 4.13 && < 5
+- valida
+
+executables:
+  executable-exe:
+    main:                Main.hs
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N

@@ -1,7 +1,7 @@
 # Valida
 Simple, elegant, applicative validation for product types - batteries included!
 
-Read the documentation on [hackage]().
+Read the documentation on [hackage](https://hackage.haskell.org/package/valida).
 
 # Highlights
 * Minimal - *Zero dependencies* apart from `base`.
@@ -63,7 +63,7 @@ main = do
 You can also find more examples [here](./examples/Main.hs).
 
 # Quick Start
-The primary purpose of the `Validator` type is to validate each field in product types. To do this, you'll use `verify`.
+The primary purpose of the `Validator` type is to validate each field in product types. To do this, you'll use [`verify`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida.html#v:verify).
 
 `verify` takes 2 inputs-
 * The "selector", which essentially just takes the product type as input, and returns the specific value of the specific field to validate.
@@ -74,7 +74,7 @@ Let's validate a pair for example, the first field should be an int less than 10
 pairValidator :: Validator (NonEmpty String) (Int, String) (Int, String)
 pairValidator = (,) <$> verify (failureIf (>=10) "NotLessThan10") fst <*> verify (notEmpty "EmptyString") snd
 ```
-Or, if you prefer using operators - you can use `-?>`, which is a flipped version of `verify`.
+Or, if you prefer using operators - you can use [`-?>`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida.html#v:-45--63--62-), which is a flipped version of `verify`.
 ```hs
 pairValidator :: Validator (NonEmpty String) (Int, String) (Int, String)
 pairValidator = (,)
@@ -82,7 +82,7 @@ pairValidator = (,)
     <*> snd -?> notEmpty "EmptyString"
 ```
 
-You can then run the validator on your input using `runValidator`-
+You can then run the validator on your input using [`runValidator`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida.html#t:Validator)-
 ```hs
 >>> runValidator pairValidator (9, "foo")
 Success (9,"foo")
@@ -92,24 +92,24 @@ Failure ("NotLessThan10" :| ["EmptyString"])
 Failure ("EmptyString" :| [])
 ```
 
-This is the core concept for building the validators. You can use the primitive combinators (e.g `failureIf`, `failureUnless`) to build `ValidationRule`s directly from predicate functions, or you can choose one of the many derivate combinators (e.g `notEmpty`) to build `ValidationRule`s. Check out the `Valida.Combinators` module documentation to view all the included combinators.
+This is the core concept for building the validators. You can use the primitive combinators (e.g [`failureIf`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida-Combinators.html#v:failureIf), [`failureUnless`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida-Combinators.html#v:failureUnless)) to build `ValidationRule`s directly from predicate functions, or you can choose one of the many derivate combinators (e.g [`notEmpty`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida-Combinators.html#v:notEmpty)) to build `ValidationRule`s. Check out the [`Valida.Combinators`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida-Combinators.html) module documentation to view all the included combinators.
 
 ## Validators for non product types
-Although the primary purpose of `Valida` is building convenient validators for product types. Sometimes, you'll find yourself not needing to select on any field, but validating the input directly. In that case, you may find yourself using this pattern-
+Although the primary purpose of Valida is building convenient validators for product types. Sometimes, you'll find yourself not needing to select on any field, but validating the input directly. In that case, you may find yourself using this pattern-
 ```hs
 -- | Make sure int input is not even.
 intValidator :: Validator (NonEmpty String) Int Int
 intValidator = verify (failureIf even "Even") id
 ```
 
-In these situations, instead of using `verify` with `id` as selector, you should use `validate` instead, which is the same as `flip verify id`-
+In these situations, instead of using `verify` with `id` as selector, you should use [`validate`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida.html#v:validate) instead, which is the same as `flip verify id`-
 ```hs
 intValidator :: Validator (NonEmpty String) Int Int
 intValidator = validate (failureIf even "Even")
 ```
 
 ## Combining multiple `ValidationRule`s
-Often, you'll find yourself in situations where you expect the input to satisfy *multiple* `ValidationRule`s, or situations where you expect the input to satisfy *at least one* of many `ValidationRule`s. This is where `andAlso`, and `orElse` come into play.
+Often, you'll find yourself in situations where you expect the input to satisfy *multiple* `ValidationRule`s, or situations where you expect the input to satisfy *at least one* of many `ValidationRule`s. This is where [`andAlso`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida-Combinators.html#v:andAlso), and [`orElse`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida-Combinators.html#v:orElse) come into play.
 
 ### Combining multiple `ValidationRule`s with `andAlso`
 `andAlso` is the semigroup implementation of `ValidationRule`, and thus is the same as `<>`. Combining 2 rules with `<>` creates a new rule that is only satisfied when *both of the given rules are satisfied*. Otherwise, the very first (left most) failure value is returned - and the rest are not tried.
@@ -164,17 +164,17 @@ Failure ("IsEven" :| ["IsDivisbleBy3"])
 ```
 
 ### Combining a foldable of `ValidationRule`s
-You can combine a foldable of `ValidationRule`s using `satisfyAll` and `satisfyAny`. `satisfyAll` folds using `andAlso`/`<>`, while `satisfyAny` folds using `orElse`/`</>`.
+You can combine a foldable of `ValidationRule`s using [`satisfyAll`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida-Combinators.html#v:satisfyAll) and [`satisfyAny`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida-Combinators.html#v:satisfyAny). `satisfyAll` folds using `andAlso`/`<>`, while `satisfyAny` folds using `orElse`/`</>`.
 
 ## Ignoring errors
-Although, highly inadvisable and generally not useful in serious code, you may use alternative versions of `ValidationRule` combinators that use `()` (unit) as its error type so you don't have to supply error values. For example, `failureIf'` does not require an error value to be supplied. In case of failure, it simply yields `Failure ()`.
+Although, highly inadvisable and generally not useful in serious code, you may use alternative versions of `ValidationRule` combinators that use `()` (unit) as its error type so you don't have to supply error values. For example, [`failureIf'`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida-Combinators.html#v:failureIf-39-) does not require an error value to be supplied. In case of failure, it simply yields `Failure ()`.
 ```hs
 >>> runValidator (validate (failureIf' even)) 2
 Failure ()
 ```
 
 ## Re-assigning errors
-Using the `label`/`<?>` and `labelV`/`<??>` functions, you can use override the errors `ValidationRule`s and `Validator`s yield.
+Using the [`label`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida.html#v:label)/[`<?>`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida.html#v:-60--63--62-) and [`labelV`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida.html#v:labelV)/[`<??>`](https://hackage.haskell.org/package/valida-0.1.0/docs/Valida.html#v:-60--63--63--62-) functions, you can use override the errors `ValidationRule`s and `Validator`s yield.
 
 For example, to re assign the error on a `ValidationRule`-
 ```hs
@@ -205,7 +205,7 @@ The concept of the `Validation` data type used in this package isn't new. It's a
 * [validation](https://hackage.haskell.org/package/validation)
 * [validation-selective](https://hackage.haskell.org/package/validation-selective)
 
-`Valida` aims to be a minimal in terms of dependencies, but batteries included in terms of API. It borrows many philosophies from `Data.Validation` (from `validation`) and `Validation` (from `validation-selective`), and aims to provide a convenient, minimal way to model the common usecases of them.
+Valida aims to be a minimal in terms of dependencies, but batteries included in terms of API. It borrows many philosophies from `Data.Validation` (from `validation`) and `Validation` (from `validation-selective`), and aims to provide a convenient, minimal way to model the common usecases of them.
 
 The `verify` function, combined with the `ValidationRule` combinators, and the parsec-esque `Validator` aims to assist in easily modeling typical validation usecases without too much boilerplate. The core idea, really, is [contravariance](#wait-couldnt-this-be-done-using-contravariant-functors) - the typical usecases, especially when validating product types (the most common target of validation), simply showcases contravariant functors.
 

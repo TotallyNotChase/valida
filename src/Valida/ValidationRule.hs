@@ -31,7 +31,7 @@ newtype ValidationRule e a
 [@(<>)@] '(<>)' creates a new `ValidationRule` that only succeeds when both given rule succeed.
 Otherwise left-most failure is returned.
 
-==== __Examples__
+__Examples__
 
 >>> runValidator (validate (failureIf even "IsEven" <> failureIf (>9) "GreaterThan9")) 5
 Success 5
@@ -52,7 +52,7 @@ instance Semigroup (ValidationRule e a) where
 
 [@mempty@] 'mempty' is a 'ValidationRule' that always succeeds.
 
-==== __Examples__
+__Examples__
 
 >>> runValidator (validate mempty) 'a'
 Success 'a'

@@ -24,7 +24,7 @@ newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a }
 
 [@fmap@] 'fmap' maps given function over the 'Validation' result by re-using 'fmap' on it.
 
-==== __Examples__
+__Examples__
 
 >>> runValidator (fmap (+1) (validate $ failureIf (==2) "IsTwo")) 3
 Success 4
@@ -38,7 +38,7 @@ instance Functor (Validator e inp) where
 
 [@pure@] 'pure' creates a 'Validator' that always yields given value wrapped in 'Success', ignoring its input.
 
-[@(<*>)@] '(<*>)' runs 2 validators to obtain the 2 'Validation' results and combines them with '(<*>)'.
+[@(\<*\>)@] '(<*>)' runs 2 validators to obtain the 2 'Validation' results and combines them with '(<*>)'.
 This can be understood as-
 
     @
@@ -47,7 +47,7 @@ This can be understood as-
 
     i.e Run __ff__ and __v__ on the input, and compose the 'Validation' results with '(<*>)'.
 
-==== __Examples__
+__Examples__
 
 >>> runValidator (pure 5) 42
 Success 5
@@ -73,7 +73,7 @@ instance Semigroup e => Applicative (Validator e inp) where
 
 [@(<>)@] '(<>)' applies input over both validator functions, and combines the 'Validation' results using '(<>)'.
 
-==== __Examples__
+__Examples__
 
 This essentially reuses the '(<>)' impl of 'Validation'.
 i.e Returns the first 'Success'. But also accumulates 'Failure's.

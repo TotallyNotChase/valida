@@ -87,7 +87,7 @@ import Valida.ValidationRule (ValidationRule (..), vrule)
 
 {- | Build a rule that /fails/ with given error __if the given predicate succeeds__.
 
-prop> failureIf predc = failureUnless (not . predc)
+@failureIf predc = 'failureUnless' ('not' . predc)@
 
 ==== __Examples__
 
@@ -103,7 +103,7 @@ failureIf predc = predToRule (not . predc) . neSingleton
 
 {- | Build a rule that /fails/ with given error __unless the given predicate succeeds__.
 
-prop> failureUnless predc = failureIf (not . predc)
+@failureUnless predc = 'failureIf' ('not' . predc)@
 
 ==== __Examples__
 
@@ -123,8 +123,9 @@ failureUnless predc = predToRule predc . neSingleton
 
 {- | Like 'failureIf' but uses /Unit/ as the 'ValidationRule' error type.
 
-prop> failureIf' predc = failureUnless' (not . predc)
-prop> label (const (err :| [])) (failureIf' predc) = failureIf predc err
+@failureIf' predc = 'failureUnless'' ('not' . predc)@
+
+@label ('const' (err :| [])) (failureIf' predc) = 'failureIf' predc err@
 
 ==== __Examples__
 
@@ -140,8 +141,9 @@ failureIf' predc = predToRule (not . predc) ()
 
 {- | Like 'failureUnless' but uses /Unit/ as the 'ValidationRule' error type.
 
-prop> failureUnless' predc = failureIf' (not . predc)
-prop> label (const (err :| [])) (failureUnless' predc) = failureUnless predc err
+@failureUnless' predc = 'failureIf'' ('not' . predc)@
+
+@label ('const' (err :| [])) (failureUnless' predc) = 'failureUnless' predc err@
 
 ==== __Examples__
 
@@ -161,7 +163,7 @@ failureUnless' = flip predToRule ()
 
 {- | Build an equality rule for value.
 
-prop> mustBe x = failureUnless (==x)
+@mustBe x = 'failureUnless' (==x)@
 -}
 mustBe :: Eq a => a -> e -> ValidationRule (NonEmpty e) a
 mustBe x = failureUnless (==x)
@@ -169,7 +171,7 @@ mustBe x = failureUnless (==x)
 
 {- | Build an equality rule for length.
 
-prop> ofLength x = failureUnless ((==x) . length)
+@ofLength x = 'failureUnless' ((==x) . 'length')@
 -}
 ofLength :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 ofLength n = failureUnless $ (==n) . length
@@ -178,7 +180,7 @@ ofLength n = failureUnless $ (==n) . length
 
 {- | Build a minimum length (inclusive) rule.
 
-prop> minLengthOf x = failureUnless ((>=n) . length)
+@minLengthOf x = 'failureUnless' ((>=n) . 'length')@
 -}
 minLengthOf :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 minLengthOf n = failureUnless $ (>=n) . length
@@ -187,7 +189,7 @@ minLengthOf n = failureUnless $ (>=n) . length
 
 {- | Build a maximum length (inclusive) rule.
 
-prop> maxLengthOf n = failureUnless ((<=n) . length)
+@maxLengthOf n = 'failureUnless' ((<=n) . 'length')@
 -}
 maxLengthOf :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 maxLengthOf n = failureUnless $ (<=n) . length
@@ -196,8 +198,9 @@ maxLengthOf n = failureUnless $ (<=n) . length
 
 {- | Build a minimum length (inclusive) rule.
 
-prop> lengthAbove x = minLengthOf (x + 1)
-prop> lengthAbove x = failureUnless ((>n) . length)
+@lengthAbove x = 'minLengthOf' (x + 1)@
+
+@lengthAbove x = 'failureUnless' ((>n) . 'length')@
 -}
 lengthAbove :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 lengthAbove n = failureUnless $ (>n) . length
@@ -206,8 +209,9 @@ lengthAbove n = failureUnless $ (>n) . length
 
 {- | Build a maximum length (inclusive) rule.
 
-prop> lengthBelow x = maxLengthOf (x - 1)
-prop> lengthBelow x = failureUnless ((<n) . length)
+@lengthBelow x = 'maxLengthOf' (x - 1)@
+
+@lengthBelow x = 'failureUnless' ((<n) . 'length')@
 -}
 lengthBelow :: Foldable t => Int -> e -> ValidationRule (NonEmpty e) (t a)
 lengthBelow n = failureUnless $ (<n) . length
@@ -216,8 +220,9 @@ lengthBelow n = failureUnless $ (<n) . length
 
 {- | Build a maximum length rule.
 
-prop> notEmpty = minLengthOf 1
-prop> notEmpty = failureIf null
+@notEmpty = 'minLengthOf' 1@
+
+@notEmpty = 'failureIf' 'null'@
 -}
 notEmpty :: Foldable t => e -> ValidationRule (NonEmpty e) (t a)
 notEmpty = failureIf null
@@ -226,8 +231,9 @@ notEmpty = failureIf null
 
 {- | Build an 'inRange' rule for length.
 
-prop> lengthWithin (min, max) = minLengthOf min `andAlso` maxLengthOf max
-prop> lengthWithin r = failureUnless (inRange r . length)
+@lengthWithin (min, max) = 'minLengthOf' min `'andAlso'` 'maxLengthOf' max@
+
+@lengthWithin r = 'failureUnless' ('inRange' r . 'length')@
 -}
 lengthWithin :: Foldable t => (Int, Int) -> e -> ValidationRule (NonEmpty e) (t a)
 lengthWithin r = failureUnless $ inRange r . length
@@ -236,7 +242,7 @@ lengthWithin r = failureUnless $ inRange r . length
 
 {- | Build a minimum value (inclusive) rule.
 
-prop> minValueOf x = failureUnless (>=x)
+@minValueOf x = 'failureUnless' (>=x)@
 -}
 minValueOf :: Ord a => a -> e -> ValidationRule (NonEmpty e) a
 minValueOf x = failureUnless (>=x)
@@ -244,7 +250,7 @@ minValueOf x = failureUnless (>=x)
 
 {- | Build a maximum value (inclusive) rule.
 
-prop> maxValueOf x = failureUnless (<=x)
+@maxValueOf x = 'failureUnless' (<=x)@
 -}
 maxValueOf :: Ord a => a -> e -> ValidationRule (NonEmpty e) a
 maxValueOf x = failureUnless (<=x)
@@ -252,8 +258,9 @@ maxValueOf x = failureUnless (<=x)
 
 {- | Build a minimum value (exclusive) rule.
 
-prop> valueAbove x = minValueOf (x + 1)
-prop> valueAbove x = failureUnless (>x)
+@valueAbove x = 'minValueOf' (x + 1)@
+
+@valueAbove x = 'failureUnless' (>x)@
 -}
 valueAbove :: Ord a => a -> e -> ValidationRule (NonEmpty e) a
 valueAbove n = failureUnless (>n)
@@ -261,8 +268,9 @@ valueAbove n = failureUnless (>n)
 
 {- | Build a maximum value (exclusive) rule.
 
-prop> valueBelow x = minValueOf (x - 1)
-prop> valueBelow x = failureUnless (<x)
+@valueBelow x = 'minValueOf' (x - 1)@
+
+@valueBelow x = 'failureUnless' (<x)@
 -}
 valueBelow :: Ord a => a -> e -> ValidationRule (NonEmpty e) a
 valueBelow n = failureUnless (<n)
@@ -270,8 +278,9 @@ valueBelow n = failureUnless (<n)
 
 {- | Build an 'inRange' rule for value.
 
-prop> valueWithin (min, max) = minValueOf min `andAlso` maxValueOf max
-prop> valueWithin (min, max) = failureUnless (\x -> m <= x && x <= n)
+@valueWithin (m, n) = 'minValueOf' m `'andAlso'` 'maxValueOf' n@
+
+@valueWithin (m, n) = 'failureUnless' (\x -> m <= x && x <= n)@
 -}
 valueWithin :: Ord a => (a, a) -> e -> ValidationRule (NonEmpty e) a
 valueWithin (m, n) = failureUnless $ \x -> m <= x && x <= n
@@ -280,7 +289,7 @@ valueWithin (m, n) = failureUnless $ \x -> m <= x && x <= n
 
 {- | Build an 'all' rule.
 
-prop> onlyContains x = failureUnless (all x)
+@onlyContains x = 'failureUnless' ('all' x)@
 -}
 onlyContains :: Foldable t => (a -> Bool) -> e -> ValidationRule (NonEmpty e) (t a)
 onlyContains x = failureUnless $ all x
@@ -289,7 +298,7 @@ onlyContains x = failureUnless $ all x
 
 {- | Build an 'any' rule.
 
-prop> atleastContains x = failureUnless (any x)
+@atleastContains x = 'failureUnless' ('any' x)@
 -}
 atleastContains :: Foldable t => (a -> Bool) -> e -> ValidationRule (NonEmpty e) (t a)
 atleastContains x = failureUnless $ any x
@@ -298,9 +307,9 @@ atleastContains x = failureUnless $ any x
 
 {- | Build an 'elem' rule.
 
-prop> mustContain x = atleastContains (==x)
+@mustContain x = 'atleastContains' (==x)@
 
-prop> mustContain x = failureUnless (elem x)
+@mustContain x = 'failureUnless' ('elem' x)@
 -}
 mustContain :: (Foldable t, Eq a) => a -> e -> ValidationRule (NonEmpty e) (t a)
 mustContain x = failureUnless $ elem x
@@ -444,9 +453,11 @@ ValidationRule rule1 </> ValidationRule rule2 = vrule $ liftA2 (<>) rule1 rule2
 
 {- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
 
-prop> rule1 `orElse` (rule2 `orElse` rule3) = (rule1 `orElse` rule2) `orElse` rule3
-prop> falseRule e `orElse` rule = rule
-prop> rule `orElse` falseRule e = rule
+@rule1 \`orElse\` (rule2 \`orElse\` rule3) = (rule1 \`orElse\` rule2) \`orElse\` rule3@
+
+@'falseRule' e \`orElse\` rule = rule@
+
+@rule \`orElse\` 'falseRule' e = rule@
 
 ==== __Examples__
 
@@ -466,8 +477,9 @@ orElse = (</>)
 
 {- | A 'ValidationRule' that always fails with supplied error. This is the identity of 'orElse' (i.e '(</>)').
 
-prop> falseRule `orElse` rule = rule
-prop> rule `orElse` falseRule = rule
+@falseRule `'orElse'` rule = rule@
+
+@rule `'orElse'` falseRule = rule@
 
 ==== __Examples__
 
@@ -482,9 +494,11 @@ falseRule = vrule $ const $ Failure mempty
 
 This is the same as the semigroup operation (i.e '(<>)') on 'ValidationRule'.
 
-prop> rule1 `andAlso` (rule2 `andAlso` rule3) = (rule1 `andAlso` rule2) `andAlso` rule3
-prop> mempty `andAlso` rule = rule
-prop> rule `andAlso` mempty = rule
+@rule1 \`andAlso\` (rule2 \`andAlso\` rule3) = (rule1 \`andAlso\` rule2) \`andAlso\` rule3@
+
+@'mempty' \`andAlso\` rule = rule@
+
+@rule \`andAlso\` 'mempty' = rule@
 
 ==== __Examples__
 
@@ -502,10 +516,13 @@ andAlso = (<>)
 
 {- | Build a rule that /succeeds/ if __any__ of the given rules succeed. If all fail, the errors are combined.
 
-prop> satisfyAny = foldl1 orElse
-prop> satisfyAny = foldr1 orElse
-prop> satisfyAny = foldl orElse falseRule
-prop> satisfyAny = foldr orElse falseRule
+@satisfyAny = 'foldl1' 'orElse'@
+
+@satisfyAny = 'foldr1' 'orElse'@
+
+@satisfyAny = 'foldl' 'orElse' 'falseRule'@
+
+@satisfyAny = 'foldr' 'orElse' 'falseRule'@
 -}
 satisfyAny :: (Foldable t, Semigroup e) => t (ValidationRule e a) -> ValidationRule e a
 satisfyAny = foldr1 (</>)
@@ -516,11 +533,15 @@ satisfyAny = foldr1 (</>)
 
 {- | Build a rule that /only succeeds/ if __all__ of the given rules succeed. The very first failure is yielded.
 
-prop> satisfyAll = fold
-prop> satisfyAll = foldl1 andAlso
-prop> satisfyAll = foldr1 andAlso
-prop> satisfyAll = foldl andAlso mempty
-prop> satisfyAll = foldr andAlso mempty
+@satisfyAll = 'fold'@
+
+@satisfyAll = 'foldl1' 'andAlso'@
+
+@satisfyAll = 'foldr1' 'andAlso'@
+
+@satisfyAll = 'foldl' 'andAlso' 'mempty'@
+
+@satisfyAll = 'foldr' 'andAlso' 'mempty'@
 -}
 satisfyAll :: Foldable t => t (ValidationRule e a) -> ValidationRule e a
 satisfyAll = fold
@@ -533,7 +554,7 @@ satisfyAll = fold
 
 {- | Build a rule that runs given rule only if input is 'Just'.
 
-Yields 'Success' when input is 'Nothing.
+Yields 'Success' when input is 'Nothing'.
 
 ==== __Examples__
 

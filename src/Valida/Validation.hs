@@ -29,7 +29,7 @@ data Validation e a
 
 [@fmap@] 'fmap' maps given function over a 'Success' value, does nothing on 'Failure' value.
 
-==== __Examples__
+__Examples__
 
 >>> fmap (+1) (Success 2)
 Success 3
@@ -45,9 +45,9 @@ instance Bifunctor Validation where
 
 {- |
 [@pure@] 'pure' is a 'Success' value.
-[@(<*>)@] '(<*>)' behaves similar to 'Either', but accumulates failures instead of stopping.
+[@(\<*\>)@] '(<*>)' behaves similar to 'Either', but accumulates failures instead of stopping.
 
-==== __Examples__
+__Examples__
 
 >>> pure 2 :: Validation String Int
 Success 2
@@ -73,7 +73,7 @@ instance Semigroup e => Applicative (Validation e) where
 {- |
 [@(<>)@] This behaves similar to the 'Either' semigroup. i.e Returns the first 'Success'. But also accumulates 'Failure's.
 
-==== __Examples__
+__Examples__
 
 >>> Success 1 <> Success 2
 Success 1
@@ -97,7 +97,7 @@ instance Semigroup e => Semigroup (Validation e a) where
 
 [@foldMap@] 'foldMap' maps given function over a 'Success' value, returns 'mempty' for a 'Failure' value.
 
-==== __Examples__
+__Examples__
 
 >>> foldMap (:[]) (Success 2)
 [2]
@@ -112,7 +112,7 @@ instance Foldable (Validation e) where
 [@traverse@] In case of 'Success', 'traverse' applies given function to the inner value, and maps 'Success' over the result.
 In case of 'Failure', 'traverse' returns 'Failure', wrapped in minimal context of the corresponding type ('pure').
 
-==== __Examples__
+__Examples__
 
 >>> traverse Just (Success 2)
 Just (Success 2)
@@ -126,7 +126,7 @@ instance Traversable (Validation e) where
 
 [@bifoldMap@] 'bifoldMap' is the same as 'validation'.
 
-==== __Examples__
+__Examples__
 
 'bifoldMap' (and its more generalized version, 'validation') can eliminate the need to pattern match on 'Validation'.
 
@@ -164,7 +164,7 @@ This is similar to 'validation', but takes in replacers instead of functions.
 
 In case of 'Failure', return the first argument; otherwise, return the second argument.
 
-prop> validationConst e a = validation (const e) (const a)
+@validationConst e a = 'validation' ('const' e) ('const' a)@
 
 ==== __Examples__
 

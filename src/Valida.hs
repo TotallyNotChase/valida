@@ -136,7 +136,7 @@ infix 6 <??>
 The 'Validator' runs the rule on its input. If validation is successful, the input is put into the 'Validation'
 result.
 
-prop> validate rule = verify rule id
+@validate rule = 'verify' rule 'id'@
 -}
 validate :: ValidationRule e a -> Validator e a a
 validate = (-?>) id

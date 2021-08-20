@@ -5,15 +5,15 @@ module Valida.ValidationUtils
       fromEither
     , toEither
       -- * Utilities for working with 'Validation'
-    , failures
-    , fromFailure
-    , fromSuccess
-    , isFailure
-    , isSuccess
-    , partitionValidations
-    , successes
     , validation
     , validationConst
+    , fromSuccess
+    , fromFailure
+    , isSuccess
+    , isFailure
+    , successes
+    , failures
+    , partitionValidations
     ) where
 
 import Valida.Validation (Validation (..), validation, validationConst)
@@ -52,17 +52,17 @@ Failure 42
 fromEither :: Either e a -> Validation e a
 fromEither = either Failure Success
 
--- | Return True if the given value is a Failure-value, False otherwise.
+-- | Return True if the given value is a 'Failure'-value, False otherwise.
 isFailure :: Validation e a -> Bool
 isFailure (Failure _) = True
 isFailure _           = False
 
--- | Return True if the given value is a Success-value, False otherwise.
+-- | Return True if the given value is a 'Success'-value, False otherwise.
 isSuccess :: Validation e a -> Bool
 isSuccess (Success _) = True
 isSuccess _           = False
 
-{- | Return the contents of a Failure-value or a default value otherwise.
+{- | Return the contents of a 'Failure'-value or a default value otherwise.
 
 ==== __Examples__
 
@@ -75,7 +75,7 @@ fromFailure :: e -> Validation e a -> e
 fromFailure _ (Failure e) = e
 fromFailure e _           = e
 
-{- | Return the contents of a Success-value or a default value otherwise.
+{- | Return the contents of a 'Success'-value or a default value otherwise.
 
 ==== __Examples__
 
@@ -88,11 +88,11 @@ fromSuccess :: a -> Validation e a -> a
 fromSuccess _ (Success a) = a
 fromSuccess a _           = a
 
-{- | Extracts from a list of 'Validation' all the Failure elements, in order.
+{- | Extracts from a list of 'Validation' all the 'Failure' values, in order.
 
 ==== __Examples__
 
->>> failures ([Success 48, Failure "err1", Failure "err2", Success 2, Failure "err3"] :: [Validation String Int])
+>>> failures [Success 48, Failure "err1", Failure "err2", Success 2, Failure "err3"]
 ["err1","err2","err3"]
 >>> failures ([Success 1, Success 2, Success 3] :: [Validation String Int])
 []
@@ -105,7 +105,7 @@ failures xs = [e | Failure e <- xs]
 
 ==== __Examples__
 
->>> successes ([Success 1, Failure "err1", Failure "err2", Success 2, Failure "err3"] :: [Validation String Int])
+>>> successes [Success 1, Failure "err1", Failure "err2", Success 2, Failure "err3"]
 [1,2]
 >>> successes ([Failure "err1", Failure "err2", Failure "err3"] :: [Validation String Int])
 []
@@ -119,15 +119,15 @@ successes xs = [a | Success a <- xs]
 All the Left elements are extracted, in order, to the first component of the output.
 Similarly the Right elements are extracted to the second component of the output.
 
-prop> partitionValidations xs = (failures xs, successes xs)
+@partitionValidations xs = ('failures' xs, 'successes' xs)@
 
 ==== __Examples__
 
->>> partitionValidations ([Success 1, Failure "err1", Failure "err2", Success 2, Failure "err3"] :: [Validation String Int])
+>>> partitionValidations [Success 1, Failure "err1", Failure "err2", Success 2, Failure "err3"]
 (["err1","err2","err3"],[1,2])
 -}
 partitionValidations :: [Validation e a] -> ([e], [a])
 partitionValidations = foldr (validation failure success) ([],[])
- where
-  failure a ~(l, r) = (a:l, r)
-  success a ~(l, r) = (l, a:r)
+  where
+    failure a ~(l, r) = (a:l, r)
+    success a ~(l, r) = (l, a:r)

@@ -31,7 +31,7 @@ data FormErr
 neSingleton :: a -> NonEmpty a
 neSingleton = (:|[])
 
--- | Validator for each field in the input form - built using 'ValidationRule' combinators.
+-- | Validator for each field in the input form - built using 'Validator' combinators.
 inpFormValidator :: Validator (NonEmpty FormErr) InputForm InputForm
 inpFormValidator = InpForm
     -- Name should be between 1 and 20 characters long

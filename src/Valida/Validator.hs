@@ -13,7 +13,18 @@ import GHC.Generics (Generic)
 
 import Valida.Validation (Validation (..))
 
--- | An applicative validator. Validates a predicate on an input when run and returns the 'Validation' result.
+{- | An applicative validator. Validates a predicate on an input when run and returns the 'Validation' result.
+
+The type can be understood as-
+
+    Validator e inp a
+              ^   ^ ^------ The output type on successful validation
+              |   |
+      Error type  |-- The input on which validation is run
+
+Validators are run using the __runValidator__ function.
+The result is of type __Validation e a__, corresponding to the type params of the same name on 'Validator'
+-}
 newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a }
   deriving (Typeable, Generic)
 
@@ -23,9 +34,9 @@ newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a }
 
 __Examples__
 
->>> runValidator (fmap (+1) (validate $ failureIf (==2) "IsTwo")) 3
+>>> runValidator (fmap (+1) (fixV $ failureIf (==2) "IsTwo")) 3
 Success 4
->>> runValidator (fmap (+1) (validate $ failureIf (==2) "IsTwo")) 2
+>>> runValidator (fmap (+1) (fixV $ failureIf (==2) "IsTwo")) 2
 Failure ("IsTwo" :| [])
 -}
 instance Functor (Validator e inp) where
@@ -48,8 +59,8 @@ __Examples__
 
 >>> runValidator (pure 5) 42
 Success 5
->>> let v1 = validate (failureIf (==2) "IsTwo")
->>> let v2 = validate (failureIf even "IsEven")
+>>> let v1 = fixV (failureIf (==2) "IsTwo")
+>>> let v2 = fixV (failureIf even "IsEven")
 >>> runValidator (const <$> v1 <*> v2) 5
 Success 5
 >>> runValidator (const <$> v1 <*> v2) 4
@@ -73,8 +84,8 @@ Left-most failure is returned, other validator is not used if one fails.
 
 __Examples__
 
->>> let v1 = validate (failureIf (==2) "IsTwo")
->>> let v2 = validate (failureIf even "IsEven")
+>>> let v1 = fixV (failureIf (==2) "IsTwo")
+>>> let v2 = fixV (failureIf even "IsEven")
 >>> runValidator (v1 <> v2) 5
 Success 5
 >>> runValidator (v1 <> v2) 4

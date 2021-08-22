@@ -2,7 +2,7 @@
 
 {- |
 Module      : Valida
-Description : Simple applicative validation for product types, batteries included!
+Description : Core Validator builders, utilities, and combinators
 Copyright   : (c) TotallyNotChase, 2021
 License     : MIT
 Maintainer  : totallynotchase42@gmail.com
@@ -11,50 +11,50 @@ Portability : Portable
 
 This module exports the primary validator building functions. It also exports all of "Valida.Combinators".
 
+For a full tutorial, check out the README at <https://github.com/TotallyNotChase/valida#readme>.
 Refer to the hackage documentation for function reference and examples.
-You can also find examples in the README, and also in the github repo, within the examples directory.
+
+You can also find more examples within the examples directory in linked github repo.
 -}
 
 module Valida
-    ( Selector
-      -- * Primary data types
-    , Validation (..)
-    , ValidationRule
+    ( -- * Primary data types
+      Validation (..)
     , Validator (runValidator)
-      -- * Functions for building Valida data types
-    , validate
+      -- * Building and modifying 'Validator's
+    , fixV
     , verify
-    , vrule
+      --
+    , validatorFrom
     , (-?>)
       -- * Reassigning errors
     , label
-    , labelV
     , (<?>)
-    , (<??>)
       -- | Re-exports of "Valida.Combinators"
     , module Valida.Combinators
     , module Valida.ValidationUtils
     ) where
 
-import Data.Bifunctor (Bifunctor (first))
+import Data.Bifunctor  (Bifunctor (first))
+import Data.Profunctor (Profunctor (lmap))
 
 import Valida.Combinators
 import Valida.Validation      (Validation (..))
-import Valida.ValidationRule  (ValidationRule (..), vrule)
 import Valida.ValidationUtils
-import Valida.Validator       (Selector, Validator (..))
+import Valida.Validator       (Validator (..))
+import Valida.ValidatorUtils  (validatorFrom)
 
-{- | Build a validator from a 'ValidationRule' and a 'Selector'.
+{- | 'fixV' given validator, and 'lmap' given selector over it.
 
-The 'Validator` first runs given __selector__ on its input to obtain the validation target. Then, it runs the
-'ValidationRule' on the target.
+The new 'Validator` first runs the __selector__ on its input to obtain the validation target. Then, it runs the
+predicate on the target.
 
-If validation is successful, the validation target is put into the 'Validation' result.
+If validation is successful, the the *original* input (not validation target) is put into the 'Validation' result.
 
 ==== __Examples__
 
-This is the primary function for building validators for your record types.
-To validate a pair, the most basic record type, such that the first element is a non empty string, and the second
+This is the primary function for building validators for product types.
+To validate a pair, the most basic product type, such that the first element is a non empty string, and the second
 element is a number greater than 9, you can use:
 
 >>> let pairValidator = (,) <$> verify (notEmpty "EmptyString") fst <*> verify (failureIf (<10) "LessThan10") snd
@@ -69,42 +69,43 @@ Failure ("LessThan10" :| [])
 >>> runValidator pairValidator ("", 9)
 Failure ("EmptyString" :| ["LessThan10"])
 -}
-verify :: ValidationRule e b -> Selector a b -> Validator e a b
-verify (ValidationRule rule) selector = Validator $ \x -> selector x <$ rule (selector x)
+verify :: Validator e b x -> (a -> b) -> Validator e a b
+verify vald selector = lmap selector $ fixV vald
 
 -- | A synonym for 'verify' with its arguments flipped.
 infix 5 -?>
 
-(-?>) :: Selector a b -> ValidationRule e b -> Validator e a b
+(-?>) :: (a -> b) -> Validator e b x -> Validator e a b
 (-?>) = flip verify
 
----------------------------------------------------------------------
--- Reassigning corresponding error to 'ValidationRule'.
----------------------------------------------------------------------
+{- | Fix a validator's output to be the same as its input.
 
-{- | Relabel a 'ValidationRule' with a different error.
-
-Many combinators, like 'failureIf'' and 'failureUnless'', simply return the given error value
-within /NonEmpty/ upon failure. You can use 'label' to override this return value.
+@fixV . fixV = 'id' . fixV@
+@'fmap' ('const' x) .  fixV = 'fmap' ('const' x)@
 
 ==== __Examples__
 
->>> let rule = label "NotEven" (failureUnless' even)
->>> runValidator (validate rule) 1
-Failure "NotEven"
+The combinators from "Valida.Combinators" use /Unit/ as 'Validator' output type.
+This is important for the 'Validator' semigroup operations to /make sense/.
+Once the 'Validator' has been built as you desire, and encodes all "rules" for validation - use fixV to fix its output to its input.
 
->>> let rule = label "DefinitelyNotEven" (failureUnless even "NotEven")
->>> runValidator (validate rule) 1
-Failure "DefinitelyNotEven"
+This allows for the applicative validation flow. The 'Validator' needs to yield its input, as output, so it can be composed using '(<*>)'.
+
+>>> runValidator (fixV $ failureIf even "Even" <> failureIf (<0) "Negative") 5
+Success 5
+>>> runValidator (fixV $ failureIf even "Even" <> failureIf (<0) "Negative") 2
+Failure ("Even" :| [])
+>>> runValidator (fixV $ failureIf even "Even" <> failureIf (<0) "Negative") (-3)
+Failure ("Negative" :| [])
+>>> runValidator (fixV $ failureIf even "Even" <> failureIf (<0) "Negative") (-2)
+Failure ("Even" :| [])
+
+Without 'fixV', it'd instead yield 'Success ()' on success.
+>>> runValidator (failureIf even "Even" <> failureIf (<0) "Negative") 5
+
 -}
-label :: e -> ValidationRule x a -> ValidationRule e a
-label err (ValidationRule rule) = vrule $ first (const err) . rule
-
--- | A synonym for 'label' with its arguments flipped.
-infix 6 <?>
-
-(<?>) :: ValidationRule x a -> e -> ValidationRule e a
-(<?>) = flip label
+fixV :: Validator e a x -> Validator e a a
+fixV (Validator v) = Validator $ \x -> x <$ v x
 
 ---------------------------------------------------------------------
 -- Reassigning corresponding error to 'Validator'.
@@ -114,29 +115,19 @@ infix 6 <?>
 
 ==== __Examples__
 
->>> let validator = labelV "NotEven" (validate (failureUnless' even))
+>>> let validator = label "NotEven" (failureUnless' even)
 >>> runValidator validator 1
 Failure "NotEven"
 
->>> let validator = labelV "DefinitelyNotEven" (validate (failureUnless even "NotEven"))
+>>> let validator = label "DefinitelyNotEven" (failureUnless even "NotEven")
 >>> runValidator validator 1
 Failure "DefinitelyNotEven"
 -}
-labelV :: e -> Validator x inp a -> Validator e inp a
-labelV err (Validator v) = Validator $ first (const err) . v
+label :: e -> Validator x inp a -> Validator e inp a
+label err (Validator v) = Validator $ first (const err) . v
 
--- | A synonym for 'labelV' with its arguments flipped.
-infix 6 <??>
+-- | A synonym for 'label' with its arguments flipped.
+infix 6 <?>
 
-(<??>) :: Validator x inp a -> e -> Validator e inp a
-(<??>) = flip labelV
-
-{- | Build a basic validator from a 'ValidationRule'.
-
-The 'Validator' runs the rule on its input. If validation is successful, the input is put into the 'Validation'
-result.
-
-@validate rule = 'verify' rule 'id'@
--}
-validate :: ValidationRule e a -> Validator e a a
-validate = (-?>) id
+(<?>) :: Validator x inp a -> e -> Validator e inp a
+(<?>) = flip label

@@ -72,28 +72,27 @@ instance Semigroup e => Applicative (Validator e inp) where
 
 {- |
 
-[@(<>)@] '(<>)' applies input over both validator functions, and combines the 'Validation' results using '(<>)'.
+[@(<>)@] '(<>)' builds a validator that /succeeds/ only if both of the given validators succeed.
+Left-most failure is returned, other validator is not used if one fails.
 
 __Examples__
-
-This essentially reuses the '(<>)' impl of 'Validation'.
-i.e Returns the first 'Success'. But also accumulates 'Failure's.
 
 >>> let v1 = validate (failureIf (==2) "IsTwo")
 >>> let v2 = validate (failureIf even "IsEven")
 >>> runValidator (v1 <> v2) 5
 Success 5
 >>> runValidator (v1 <> v2) 4
-Success 4
+Failure ("IsEven" :| [])
 >>> runValidator (v1 <> v2) 2
-Failure ("IsTwo" :| ["IsEven"])
+Failure ("IsTwo" :| [])
 -}
-instance Semigroup e => Semigroup (Validator e inp a) where
-    {-# SPECIALIZE instance Semigroup (Validator (NonEmpty err) inp a) #-}
-    {-# SPECIALIZE instance Semigroup (Validator () inp a) #-}
-    {-# SPECIALIZE instance Semigroup (Validator [err] inp a) #-}
-    Validator f <> Validator g = Validator $ f <> g
-    {-# INLINEABLE (<>) #-}
+instance Semigroup (Validator e inp a) where
+    Validator v1 <> Validator v2 = Validator $ \x -> case (v1 x, v2 x) of
+        (f@(Failure _), _) -> f
+        (_, b)             -> b
+
+instance Monoid a => Monoid (Validator e inp a) where
+    mempty = Validator $ const $ Success mempty
 
 {- |
 

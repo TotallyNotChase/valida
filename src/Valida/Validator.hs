@@ -7,6 +7,7 @@ module Valida.Validator
     ) where
 
 import Data.List.NonEmpty (NonEmpty)
+import Data.Profunctor    (Profunctor (lmap, rmap))
 import Data.Typeable      (Typeable)
 
 import GHC.Generics (Generic)
@@ -93,3 +94,23 @@ instance Semigroup e => Semigroup (Validator e inp a) where
     {-# SPECIALIZE instance Semigroup (Validator [err] inp a) #-}
     Validator f <> Validator g = Validator $ f <> g
     {-# INLINEABLE (<>) #-}
+
+{- |
+
+[@lmap@] 'lmap' runs given function on 'Validator' input before applying it to the validator function.
+This is similar to the 'Data.Contravariant.Predicate' type.
+
+[@rmap@] 'rmap' is the same as 'fmap'.
+
+__Examples__
+
+>>> runValidator (lmap fst (fixV $ failureIf (==2) "IsTwo")) (3, 2)
+Success 3
+>>> runValidator (lmap snd (fixV $ failureIf (==2) "IsTwo")) (3, 2)
+Failure ("IsTwo" :| [])
+>>> runValidator (rmap (+1) (fixV $ failureIf (==2) "IsTwo")) 3
+Failure ("IsTwo" :| [])
+-}
+instance Profunctor (Validator e) where
+    lmap selector (Validator v) = Validator $ v . selector
+    rmap = fmap

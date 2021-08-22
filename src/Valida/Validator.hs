@@ -2,8 +2,7 @@
 {-# LANGUAGE Safe          #-}
 
 module Valida.Validator
-    ( Selector
-    , Validator (..)
+    ( Validator (..)
     ) where
 
 import Data.List.NonEmpty (NonEmpty)
@@ -13,9 +12,6 @@ import Data.Typeable      (Typeable)
 import GHC.Generics (Generic)
 
 import Valida.Validation (Validation (..))
-
--- | Convenience alias for functions that "select" a record field.
-type Selector a b = a -> b
 
 -- | An applicative validator. Validates a predicate on an input when run and returns the 'Validation' result.
 newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a }

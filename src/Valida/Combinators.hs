@@ -2,7 +2,7 @@
 
 {- |
 Module      : Valida.Combinators
-Description : Combinators and utilities for building and combining 'Validator's.
+Description : Combinators and utilities for building and combining 'Validator's
 Copyright   : (c) TotallyNotChase, 2021
 License     : MIT
 Maintainer  : totallynotchase42@gmail.com
@@ -23,12 +23,13 @@ module Valida.Combinators
     , failureIf'
     , failureUnless'
       -- * Negating 'Validator'
-    , negateRule
-    , negateRule'
+    , negateV
+    , negateV'
       -- * Combining 'Validator's
     , andAlso
-    , falseRule
     , orElse
+      --
+    , failV
     , satisfyAll
     , satisfyAny
     , (</>)
@@ -89,11 +90,11 @@ import Valida.ValidatorUtils (validatorFrom)
 
 ==== __Examples__
 
->>> runValidator (validate (failureIf (>0) "Positive")) 5 ()
+>>> runValidator (fixV (failureIf (>0) "Positive")) 5 ()
 Failure ("Positive" :| [])
->>> runValidator (validate (failureIf (>0) "Positive")) 0 ()
+>>> runValidator (fixV (failureIf (>0) "Positive")) 0 ()
 Success 0
->>> runValidator (validate (failureIf (>0) "Positive")) (-1) ()
+>>> runValidator (fixV (failureIf (>0) "Positive")) (-1) ()
 Success (-1)
 -}
 failureIf :: (a -> Bool) -> e -> Validator (NonEmpty e) a ()
@@ -105,11 +106,11 @@ failureIf predc = validatorFrom (not . predc) . neSingleton
 
 ==== __Examples__
 
->>> runValidator (validate (failureUnless (>0) "NonPositive")) 5 ()
+>>> runValidator (fixV (failureUnless (>0) "NonPositive")) 5 ()
 Success 5
->>> runValidator (validate (failureUnless (>0) "NonPositive")) 0 ()
+>>> runValidator (fixV (failureUnless (>0) "NonPositive")) 0 ()
 Failure ("NonPositive" :| [])
->>> runValidator (validate (failureUnless (>0) "NonPositive")) (-1) ()
+>>> runValidator (fixV (failureUnless (>0) "NonPositive")) (-1) ()
 Failure ("NonPositive" :| [])
 -}
 failureUnless :: (a -> Bool) -> e -> Validator (NonEmpty e) a ()
@@ -127,11 +128,11 @@ failureUnless predc = validatorFrom predc . neSingleton
 
 ==== __Examples__
 
->>> runValidator (validate (failureIf' (>0))) 5 ()
+>>> runValidator (fixV (failureIf' (>0))) 5 ()
 Failure ()
->>> runValidator (validate (failureIf' (>0))) 0 ()
+>>> runValidator (fixV (failureIf' (>0))) 0 ()
 Success 0
->>> runValidator (validate (failureIf' (>0))) (-1) ()
+>>> runValidator (fixV (failureIf' (>0))) (-1) ()
 Success (-1)
 -}
 failureIf' :: (a -> Bool) -> Validator () a ()
@@ -145,11 +146,11 @@ failureIf' predc = validatorFrom (not . predc) ()
 
 ==== __Examples__
 
->>> runValidator (validate (failureUnless' (>0))) 5 ()
+>>> runValidator (fixV (failureUnless' (>0))) 5 ()
 Success 5
->>> runValidator (validate (failureUnless' (>0))) 0 ()
+>>> runValidator (fixV (failureUnless' (>0))) 0 ()
 Failure ()
->>> runValidator (validate (failureUnless' (>0))) (-1) ()
+>>> runValidator (fixV (failureUnless' (>0))) (-1) ()
 Failure ()
 -}
 failureUnless' :: (a -> Bool) -> Validator () a ()
@@ -413,24 +414,24 @@ mustContain' x = failureUnless' $ elem x
 -- Negating 'Validator'
 ---------------------------------------------------------------------
 
-{- | Build a rule that succeeds if given rule fails and vice versa.
+{- | Build a validator that succeeds if given validator fails and vice versa.
 
 ==== __Examples__
 
->>> let rule = negateRule "NonPositive" (failureIf (>0) "Positive")
->>> runValidator (validate rule) 5 ()
+>>> let vald = negateV "NonPositive" (failureIf (>0) "Positive")
+>>> runValidator (fixV vald) 5 ()
 Success 5
->>> runValidator (validate rule) 0 ()
+>>> runValidator (fixV vald) 0 ()
 Failure "NonPositive"
->>> runValidator (validate rule) (-1) ()
+>>> runValidator (fixV vald) (-1) ()
 Failure "NonPositive"
 -}
-negateRule :: e -> Validator e1 a x -> Validator e a ()
-negateRule err (Validator v) = Validator $ validationConst (Success ()) (Failure err) . v
+negateV :: e -> Validator e1 a x -> Validator e a ()
+negateV err (Validator v) = Validator $ validationConst (Success ()) (Failure err) . v
 
--- | Like 'negateRule' but uses /Unit/ as the 'Validator' error type.
-negateRule' :: Validator e a x -> Validator () a ()
-negateRule' (Validator v) = Validator $ ($ ()) . validationConst Success Failure . v
+-- | Like 'negateV' but uses /Unit/ as the 'Validator' error type.
+negateV' :: Validator e a x -> Validator () a ()
+negateV' (Validator v) = Validator $ ($ ()) . validationConst Success Failure . v
 
 ---------------------------------------------------------------------
 -- Combining 'Validator's
@@ -449,24 +450,24 @@ Validator v1 </> Validator v2 = Validator $ v1 <> v2
 {-# SPECIALIZE (</>) :: Validator () a () -> Validator () a () -> Validator () a () #-}
 {-# SPECIALIZE (</>) :: Validator [err] a () -> Validator [err] a () -> Validator [err] a () #-}
 
-{- | Build a rule that /succeeds/ if __either__ of the given rules succeed. If both fail, the errors are combined.
+{- | Build a validator that /succeeds/ if __either__ of the given validators succeed. If both fail, the errors are combined.
 
-@rule1 \`orElse\` (rule2 \`orElse\` rule3) = (rule1 \`orElse\` rule2) \`orElse\` rule3@
+@vald1 \`orElse\` (vald2 \`orElse\` vald3) = (vald1 \`orElse\` vald2) \`orElse\` vald3@
 
-@'falseRule' e \`orElse\` rule = rule@
+@'failV' e \`orElse\` vald = vald@
 
-@rule \`orElse\` 'falseRule' e = rule@
+@vald \`orElse\` 'failV' e = vald@
 
 ==== __Examples__
 
->>> let rule = failureIf (>0) "Positive" `orElse` failureIf even "Even"
->>> runValidator (validate rule) 5 ()
+>>> let vald = failureIf (>0) "Positive" `orElse` failureIf even "Even"
+>>> runValidator (fixV vald) 5 ()
 Success 5
->>> runValidator (validate rule) 4 ()
+>>> runValidator (fixV vald) 4 ()
 Failure ("Positive" :| ["Even"])
->>> runValidator (validate rule) 0 ()
+>>> runValidator (fixV vald) 0 ()
 Success 0
->>> runValidator (validate rule) (-1) ()
+>>> runValidator (fixV vald) (-1) ()
 Success (-1)
 -}
 orElse :: Semigroup e => Validator e a () -> Validator e a () -> Validator e a ()
@@ -475,52 +476,52 @@ orElse = (</>)
 
 {- | A 'Validator' that always fails with supplied error. This is the identity of 'orElse' (i.e '(</>)').
 
-@falseRule `'orElse'` rule = rule@
+@failV `'orElse'` vald = vald@
 
-@rule `'orElse'` falseRule = rule@
+@vald `'orElse'` failV = vald@
 
 ==== __Examples__
 
->>> runValidator (validate falseRule) 42 ()
+>>> runValidator (fixV failV) 42 ()
 Failure ()
 -}
-falseRule :: Monoid e => Validator e a ()
-falseRule = Validator $ const $ Failure mempty
-{-# INLINABLE falseRule #-}
+failV :: Monoid e => Validator e a ()
+failV = Validator $ const $ Failure mempty
+{-# INLINABLE failV #-}
 
-{- | Build a rule that /only succeeds/ if __both__ of the given rules succeed. The very first failure is yielded.
+{- | Build a validator that /only succeeds/ if __both__ of the given validators succeed. The very first failure is yielded.
 
 This is the same as the semigroup operation (i.e '(<>)') on 'Validator'.
 
-@rule1 \`andAlso\` (rule2 \`andAlso\` rule3) = (rule1 \`andAlso\` rule2) \`andAlso\` rule3@
+@vald1 \`andAlso\` (vald2 \`andAlso\` vald3) = (vald1 \`andAlso\` vald2) \`andAlso\` vald3@
 
-@'mempty' \`andAlso\` rule = rule@
+@'mempty' \`andAlso\` vald = vald@
 
-@rule \`andAlso\` 'mempty' = rule@
+@vald \`andAlso\` 'mempty' = vald@
 
 ==== __Examples__
 
->>> let rule = failureIf (>0) "Positive" `andAlso` failureIf even "Even"
->>> runValidator (validate rule) 5 ()
+>>> let vald = failureIf (>0) "Positive" `andAlso` failureIf even "Even"
+>>> runValidator (fixV vald) 5 ()
 Failure ("Positive" :| [])
->>> runValidator (validate rule) (-2) ()
+>>> runValidator (fixV vald) (-2) ()
 Failure ("Even" :| [])
->>> runValidator (validate rule) (-1) ()
+>>> runValidator (fixV vald) (-1) ()
 Success (-1)
 -}
 andAlso :: Validator e a () -> Validator e a () -> Validator e a ()
 andAlso = (<>)
 {-# INLINABLE andAlso #-}
 
-{- | Build a rule that /succeeds/ if __any__ of the given rules succeed. If all fail, the errors are combined.
+{- | Build a validator that /succeeds/ if __any__ of the given validators succeed. If all fail, the errors are combined.
 
 @satisfyAny = 'foldl1' 'orElse'@
 
 @satisfyAny = 'foldr1' 'orElse'@
 
-@satisfyAny = 'foldl' 'orElse' 'falseRule'@
+@satisfyAny = 'foldl' 'orElse' 'failV'@
 
-@satisfyAny = 'foldr' 'orElse' 'falseRule'@
+@satisfyAny = 'foldr' 'orElse' 'failV'@
 -}
 satisfyAny :: (Foldable t, Semigroup e) => t (Validator e a ()) -> Validator e a ()
 satisfyAny = foldr1 (</>)
@@ -529,7 +530,7 @@ satisfyAny = foldr1 (</>)
 {-# SPECIALIZE satisfyAny :: [Validator () a ()] -> Validator () a () #-}
 {-# SPECIALIZE satisfyAny :: [Validator [err] a ()] -> Validator [err] a () #-}
 
-{- | Build a rule that /only succeeds/ if __all__ of the given rules succeed. The very first failure is yielded.
+{- | Build a validator that /only succeeds/ if __all__ of the given validators succeed. The very first failure is yielded.
 
 @satisfyAll = 'fold'@
 
@@ -550,17 +551,17 @@ satisfyAll = fold
 -- Type specific 'Validator's
 ---------------------------------------------------------------------
 
-{- | Build a rule that runs given rule only if input is 'Just'.
+{- | Build a validator that runs given validator only if input is 'Just'.
 
 Yields 'Success' when input is 'Nothing'.
 
 ==== __Examples__
 
->>> runValidator (validate (optionally (failureIf even "Even"))) (Just 5) ()
+>>> runValidator (fixV (optionally (failureIf even "Even"))) (Just 5) ()
 Success (Just 5)
->>> runValidator (validate (optionally (failureIf even "Even"))) (Just 6) ()
+>>> runValidator (fixV (optionally (failureIf even "Even"))) (Just 6) ()
 Failure ("Even" :| [])
->>> runValidator (validate (optionally (failureIf even "Even"))) Nothing ()
+>>> runValidator (fixV (optionally (failureIf even "Even"))) Nothing ()
 Success Nothing
 -}
 optionally :: Validator e a () -> Validator e (Maybe a) ()

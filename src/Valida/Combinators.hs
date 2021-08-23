@@ -418,6 +418,8 @@ mustContain' x = failureUnless' $ elem x
 
 {- | Build a validator that succeeds if given validator fails and vice versa.
 
+__Note__: This will set the output of the 'Validator' to be the same as its input.
+
 ==== __Examples__
 
 >>> let vald = negateV "NonPositive" (failureIf (>0) "Positive")
@@ -452,7 +454,9 @@ Validator v1 </> Validator v2 = Validator $ v1 <> v2
 {-# SPECIALIZE (</>) :: Validator () inp a -> Validator () inp a -> Validator () inp a #-}
 {-# SPECIALIZE (</>) :: Validator [err] inp a -> Validator [err] inp a -> Validator [err] inp a #-}
 
-{- | Build a validator that /succeeds/ if __either__ of the given validators succeed. If both fail, the errors are combined.
+{- | Build a validator that /succeeds/ if __either__ of the given validators succeed.
+The first (left-most) 'Success' is returned. If both fail, the errors are combined.
+Other validator /is not used/ if first one succeeds.
 
 @vald1 \`orElse\` (vald2 \`orElse\` vald3) = (vald1 \`orElse\` vald2) \`orElse\` vald3@
 
@@ -491,7 +495,9 @@ failV :: Monoid e => Validator e inp a
 failV = Validator $ const $ Failure mempty
 {-# INLINABLE failV #-}
 
-{- | Build a validator that /only succeeds/ if __both__ of the given validators succeed. The very first failure is yielded.
+{- | Build a validator that /only succeeds/ if __both__ of the given validators succeed.
+The __first (left-most)__ failure is yielded. If both succeed, the __right-most__ 'Success' result is returned.
+Other validator /is not used/ if first one fails.
 
 This is the same as the semigroup operation (i.e '(<>)') on 'Validator'.
 
@@ -516,6 +522,8 @@ andAlso = (<>)
 {-# INLINABLE andAlso #-}
 
 {- | Build a validator that /succeeds/ if __any__ of the given validators succeed. If all fail, the errors are combined.
+The __first (left-most)__ 'Success' is returned. If all fail, the errors are /combined/.
+Remaining validators /are not used/ once one succeeds.
 
 @satisfyAny = 'foldl1' 'orElse'@
 
@@ -532,9 +540,11 @@ satisfyAny = foldr1 orElse
 {-# SPECIALIZE satisfyAny :: [Validator () inp a] -> Validator () inp a #-}
 {-# SPECIALIZE satisfyAny :: [Validator [err] inp a] -> Validator [err] inp a #-}
 
-{- | Build a validator that /only succeeds/ if __all__ of the given validators succeed. The very first failure is yielded.
+{- | Build a validator that /only succeeds/ if __all__ of the given validators succeed.
+The __first (left-most)__ failure is yielded. If all succeed, the __right-most__ 'Success' result is returned.
+Remaining validators /are not used/ once one fails.
 
-@satisfyAll = 'fold'@
+@satisfyAll = 'Data.Foldable.fold'@
 
 @satisfyAll = 'foldl1' 'andAlso'@
 

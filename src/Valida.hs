@@ -24,8 +24,6 @@ module Valida
       -- * Building and modifying 'Validator's
     , fixV
     , verify
-      --
-    , validatorFrom
     , (-?>)
       -- * Reassigning errors
     , label
@@ -42,7 +40,6 @@ import Valida.Combinators
 import Valida.Validation      (Validation (..))
 import Valida.ValidationUtils
 import Valida.Validator       (Validator (..))
-import Valida.ValidatorUtils  (validatorFrom)
 
 {- | 'fixV' given validator, and 'lmap' given selector over it.
 

@@ -26,7 +26,6 @@ data Validation e a
   deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 {- |
-
 [@fmap@] 'fmap' maps given function over a 'Success' value, does nothing on 'Failure' value.
 
 __Examples__
@@ -94,7 +93,6 @@ instance Semigroup e => Semigroup (Validation e a) where
     {-# INLINEABLE (<>) #-}
 
 {- |
-
 [@foldMap@] 'foldMap' maps given function over a 'Success' value, returns 'mempty' for a 'Failure' value.
 
 __Examples__
@@ -108,7 +106,6 @@ instance Foldable (Validation e) where
     foldMap = validation (const mempty)
 
 {- |
-
 [@traverse@] In case of 'Success', 'traverse' applies given function to the inner value, and maps 'Success' over the result.
 In case of 'Failure', 'traverse' returns 'Failure', wrapped in minimal context of the corresponding type ('pure').
 
@@ -123,7 +120,6 @@ instance Traversable (Validation e) where
     traverse f = validation (pure . Failure) (fmap Success . f)
 
 {- |
-
 [@bifoldMap@] 'bifoldMap' is the same as 'validation'.
 
 __Examples__

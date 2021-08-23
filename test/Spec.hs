@@ -16,14 +16,15 @@ import qualified Test.Tasty.SmallCheck as SC
 import Valida (Validation (..), Validator (runValidator), failureIf, failureIf', failureUnless, label,
                failureUnless', failures, failV, fromEither, negateV, negateV', partitionValidations,
                satisfyAll, satisfyAny, successes, toEither, fixV, validation, validationConst, (-?>), (</>),
-               (<?>), validatorFrom)
+               (<?>))
 
 import Gen   (NonEmptyLQ, ValidationQ (..))
 import Utils (neSingleton)
+import Data.Functor
 
--- | Helper to build a validator and run it on input at once.
-validatify :: Validator e a x -> a -> Validation e a
-validatify = runValidator . fixV
+-- | Helper to build a validator with the raw given error.
+validatorFrom :: (a -> Bool) -> e -> Validator e a a
+validatorFrom predc err = failureUnless' predc <?> err
 
 -- | Test the primitive non empty combinators.
 testPrimCombs :: [TestTree]
@@ -50,7 +51,7 @@ testPrimCombs =
       testValidator (failureUnless or, "Has True", [False, False, False], const . Failure . neSingleton)
   ]
   where
-    testValidator ~(rule, err, inp, expct) = rule err `validatify` inp @?= expct err inp
+    testValidator ~(validator, err, inp, expct) = validator err `runValidator` inp @?= expct err inp
 
 -- | Test the primitive unit combinators.
 testPrimCombs' :: [TestTree]
@@ -77,7 +78,7 @@ testPrimCombs' =
       testValidator (failureUnless' or, [False, False, False], const $ Failure ())
   ]
   where
-    testValidator ~(rule, inp, expct) = rule `validatify` inp @?= expct inp
+    testValidator ~(validator, inp, expct) = validator `runValidator` inp @?= expct inp
 
 -- | Test the primitive unit combinators with labeled errors.
 testPrimCombs'' :: [TestTree]
@@ -94,7 +95,7 @@ testPrimCombs'' =
       testValidator (failureUnless' or, "Has True", [False, False, False], Failure)
   ]
   where
-    testValidator ~(rule, err, inp, expct) = (rule <?> err) `validatify` inp @?= expct err
+    testValidator ~(validator, err, inp, expct) = (validator <?> err) `runValidator` inp @?= expct err
 
 -- | Test multiple validators combined.
 testValidatorCollc :: [TestTree]
@@ -211,25 +212,25 @@ testNEUnitRelation =
   [ QC.testProperty "(QC) failureIf p err = label (const (neSingleton err)) (failureIf' p)"
       ((\predc inp err -> QC.classify (predc inp) "Significant"
         $ QC.classify (not $ predc inp) "Trivial"
-        $ failureIf predc err `validatify` inp
-        == (failureIf' predc <?> neSingleton err) `validatify` inp
+        $ failureIf predc err `runValidator` inp
+        == (failureIf' predc <?> neSingleton err) `runValidator` inp
        ) :: (Char -> Bool) -> Char -> String -> QC.Property
       )
   , SC.testProperty "(SC) failureIf p err = label (const (neSingleton err)) (failureIf' p)"
-      ((\predc inp err -> failureIf predc err `validatify` inp
-        == (failureIf' predc <?> neSingleton err) `validatify` inp
+      ((\predc inp err -> failureIf predc err `runValidator` inp
+        == (failureIf' predc <?> neSingleton err) `runValidator` inp
        ) :: (Bool -> Bool) -> Bool -> Int -> Bool
       )
   , QC.testProperty "(QC) failureUnless p err = label (const (neSingleton err)) (failureUnless' p)"
       ((\predc inp err -> QC.classify (not $ predc inp) "Significant"
         $ QC.classify (predc inp) "Trivial"
-        $ failureUnless predc err `validatify` inp
-        == (failureUnless' predc <?> neSingleton err) `validatify` inp
+        $ failureUnless predc err `runValidator` inp
+        == (failureUnless' predc <?> neSingleton err) `runValidator` inp
        ) :: (Char -> Bool) -> Char -> String -> QC.Property
       )
   , SC.testProperty "(SC) failureUnless p err = label (const (neSingleton err)) (failureUnless' p)"
-      ((\predc inp err -> failureUnless predc err `validatify` inp
-        == (failureUnless' predc <?> neSingleton err) `validatify` inp
+      ((\predc inp err -> failureUnless predc err `runValidator` inp
+        == (failureUnless' predc <?> neSingleton err) `runValidator` inp
        ) :: (Bool -> Bool) -> Bool -> Int -> Bool
       )
   ]
@@ -244,9 +245,9 @@ testnegateV =
   ]
   where
     helper :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
-    helper ~(predc, err) x = let rule = validatorFrom predc err
-        in negateV err (negateV err rule) `validatify` x == rule `validatify` x
-        && negateV' (negateV' rule) `validatify` x == (rule <?> ()) `validatify` x
+    helper ~(predc, err) x = let validator = validatorFrom predc err
+        in negateV err (negateV err validator) `runValidator` x == validator `runValidator` x
+        && negateV' (negateV' validator) `runValidator` x == (validator <?> ()) `runValidator` x
 
 -- | Test the relation between failureIf and failureUnless.
 testIfUnlessRelation :: [TestTree]
@@ -266,18 +267,18 @@ testIfUnlessRelation =
   ]
   where
     helper :: Eq a => (a -> Bool) -> a -> Bool
-    helper predc inp = failureIf' predc `validatify` inp
-        == failureUnless' (not . predc) `validatify` inp
+    helper predc inp = failureIf' predc `runValidator` inp
+        == failureUnless' (not . predc) `runValidator` inp
     negateHelper :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
-    negateHelper ~(predc, err) inp = failureIf predc err `validatify` inp
-        == negateV (neSingleton err) (failureUnless' predc) `validatify` inp
-        && failureUnless predc err `validatify` inp
-        == negateV (neSingleton err) (failureIf' predc) `validatify` inp
+    negateHelper ~(predc, err) inp = failureIf predc err `runValidator` inp
+        == negateV (neSingleton err) (failureUnless' predc) `runValidator` inp
+        && failureUnless predc err `runValidator` inp
+        == negateV (neSingleton err) (failureIf' predc) `runValidator` inp
     negateHelper' :: Eq a => (a -> Bool) -> a -> Bool
-    negateHelper' predc inp = failureIf' predc `validatify` inp
-        == negateV' (failureUnless' predc) `validatify` inp
-        && failureUnless' predc `validatify` inp
-        == negateV' (failureIf' predc) `validatify` inp
+    negateHelper' predc inp = failureIf' predc `runValidator` inp
+        == negateV' (failureUnless' predc) `runValidator` inp
+        && failureUnless' predc `runValidator` inp
+        == negateV' (failureIf' predc) `runValidator` inp
 
 -- | Test orElse properties.
 testOrElse :: [TestTree]
@@ -286,44 +287,44 @@ testOrElse =
       (failVTest :: String -> Bool)
   , SC.testProperty "(SC) failV always fails"
       (failVTest :: Maybe Char -> Bool)
-  , QC.testProperty "(QC) Associativity: rule1 </> (rule2 </> rule3) = (rule1 </> rule2) </> rule3"
+  , QC.testProperty "(QC) Associativity: validator1 </> (validator2 </> validator3) = (validator1 </> validator2) </> validator3"
       (asscTest :: (Char -> Bool, String) -> (Char -> Bool, String) -> (Char -> Bool, String) -> Char -> Bool)
-  , SC.testProperty "(SC) Associativity: rule1 </> (rule2 </> rule3) = (rule1 </> rule2) </> rule3"
+  , SC.testProperty "(SC) Associativity: validator1 </> (validator2 </> validator3) = (validator1 </> validator2) </> validator3"
       (asscTest :: (Bool -> Bool, [()]) -> (Bool -> Bool, [()]) -> (Bool -> Bool, [()]) -> Bool -> Bool)
-  , QC.testProperty "(QC) Identity: rule </> failV = failV </> rule = rule"
+  , QC.testProperty "(QC) Identity: validator </> failV = failV </> validator = validator"
       (identTest :: (Int -> Bool, String) -> Int -> Bool)
-  , SC.testProperty "(SC) Identity: rule </> failV = failV </> rule = rule"
+  , SC.testProperty "(SC) Identity: validator </> failV = failV </> validator = validator"
       (identTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
-  , QC.testProperty "(QC) Annihilator: rule </> mempty = mempty </> rule = mempty"
-      (annihilatorTest :: (Int -> Bool, String) -> Int -> Bool)
-  , SC.testProperty "(SC) Annihilator: rule </> mempty = mempty </> rule = mempty"
-      (annihilatorTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
-  , QC.testProperty "(QC) Complement: rule </> (negateV e rule) = (negateV e rule) </> rule = Success"
+  , QC.testProperty "(QC) Annihilator: validator </> mempty = mempty </> validator = mempty"
+      (annihilatorTest :: ([Int] -> Bool, String) -> [Int] -> Bool)
+  , SC.testProperty "(SC) Annihilator: validator </> mempty = mempty </> validator = mempty"
+      (annihilatorTest :: (Maybe Bool -> Bool, [Bool]) -> Maybe Bool -> Bool)
+  , QC.testProperty "(QC) Complement: validator </> (negateV e validator) = (negateV e validator) </> validator = Success"
       (complmTest :: (Int -> Bool, String, String) -> Int -> Bool)
-  , SC.testProperty "(SC) Complement: rule </> (negateV e rule) = (negateV e rule) </> rule = Success"
+  , SC.testProperty "(SC) Complement: validator </> (negateV e validator) = (negateV e validator) </> validator = Success"
       (complmTest :: (Bool -> Bool, [Bool], [Bool]) -> Bool -> Bool)
   ]
   where
     failVTest :: Eq a => a -> Bool
-    failVTest = (==Failure (mempty :: String)) . validatify failV
+    failVTest = (==Failure (mempty :: String)) . runValidator (fixV failV)
     asscTest :: (Eq a, Eq e, Semigroup e) => (a -> Bool, e) -> (a -> Bool, e) -> (a -> Bool, e) -> a -> Bool
     asscTest ~(f, err1) ~(g, err2) ~(h, err3) x =
-        let ~(rule1, rule2, rule3) = (validatorFrom f err1, validatorFrom g err2, validatorFrom h err3)
-        in  (rule1 </> (rule2 </> rule3)) `validatify` x == ((rule1 </> rule2) </> rule3) `validatify` x
+        let ~(validator1, validator2, validator3) = (validatorFrom f err1, validatorFrom g err2, validatorFrom h err3)
+        in  (validator1 </> (validator2 </> validator3)) `runValidator` x == ((validator1 </> validator2) </> validator3) `runValidator` x
     identTest :: (Eq a, Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
-    identTest ~(f, err) x = let rule = validatorFrom f err
-        in (rule </> failV) `validatify` x == rule `validatify` x
-        && (failV </> rule) `validatify` x == rule `validatify` x
-    annihilatorTest :: (Eq a, Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
-    annihilatorTest ~(f, err) x = let rule = validatorFrom f err
-        in (rule </> mempty) `validatify` x == Success x
-        && (mempty </> rule) `validatify` x == Success x
+    identTest ~(f, err) x = let validator = validatorFrom f err
+        in (validator </> failV) `runValidator` x == validator `runValidator` x
+        && (failV </> validator) `runValidator` x == validator `runValidator` x
+    annihilatorTest :: (Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
+    annihilatorTest ~(f, err) x = let validator = void $ validatorFrom f err
+        in (validator </> mempty) `runValidator` x == Success ()
+        && (mempty </> validator) `runValidator` x == Success ()
     complmTest :: (Eq a, Eq e, Semigroup e) => (a -> Bool, e, e) -> a -> Bool
     complmTest ~(f, err, err') x =
-        let rule = validatorFrom f err
-        in let complmRule = negateV err' rule
-        in (rule </> complmRule) `validatify` x == Success x
-        && (complmRule </> rule) `validatify` x == Success x
+        let validator = validatorFrom f err
+        in let complmvalidator = negateV err' validator
+        in (validator </> complmvalidator) `runValidator` x == Success x
+        && (complmvalidator </> validator) `runValidator` x == Success x
 
 {-# ANN testAndAlso "HLint: ignore Monoid law, right identity" #-}
 {-# ANN testAndAlso "HLint: ignore Monoid law, left identity" #-}
@@ -334,53 +335,52 @@ testAndAlso =
       (memptyTest :: String -> Bool)
   , SC.testProperty "(SC) mempty always succeeds"
       (memptyTest :: Maybe Char -> Bool)
-  , QC.testProperty "(QC) Associativity: rule1 <> (rule2 <> rule3) = (rule1 <> rule2) <> rule3"
+  , QC.testProperty "(QC) Associativity: validator1 <> (validator2 <> validator3) = (validator1 <> validator2) <> validator3"
       (asscTest :: (Char -> Bool, String) -> (Char -> Bool, String) -> (Char -> Bool, String) -> Char -> Bool)
-  , SC.testProperty "(SC) Associativity: rule1 <> (rule2 <> rule3) = (rule1 <> rule2) <> rule3"
+  , SC.testProperty "(SC) Associativity: validator1 <> (validator2 <> validator3) = (validator1 <> validator2) <> validator3"
       (asscTest :: (Bool -> Bool, [()]) -> (Bool -> Bool, [()]) -> (Bool -> Bool, [()]) -> Bool -> Bool)
-  , QC.testProperty "(QC) Identity: rule <> mempty = mempty <> rule = rule"
-      (identTest :: (Int -> Bool, String) -> Int -> Bool)
-  , SC.testProperty "(SC) Identity: rule <> mempty = mempty <> rule = rule"
-      (identTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
-  , QC.testProperty "(QC) Annihilator: rule <> failV = failV <> rule = failV"
+  , QC.testProperty "(QC) Identity: validator <> mempty = mempty <> validator = validator"
+      (identTest :: ([Int] -> Bool, String) -> [Int] -> Bool)
+  , SC.testProperty "(SC) Identity: validator <> mempty = mempty <> validator = validator"
+      (identTest :: (Maybe Bool -> Bool, [Bool]) -> Maybe Bool -> Bool)
+  , QC.testProperty "(QC) Annihilator: validator <> failV = failV <> validator = failV"
       (annihilatorTest :: (Int -> Bool, String) -> Int -> Bool)
-  , SC.testProperty "(SC) Annihilator: rule <> failV = failV <> rule = failV"
+  , SC.testProperty "(SC) Annihilator: validator <> failV = failV <> validator = failV"
       (annihilatorTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
-  , QC.testProperty "(QC) Complement: rule <> (negateV e rule) = (negateV e rule) <> rule = Failure"
+  , QC.testProperty "(QC) Complement: validator <> (negateV e validator) = (negateV e validator) <> validator = Failure"
       (complmTest :: (Int -> Bool, String, String) -> Int -> Bool)
-  , SC.testProperty "(SC) Complement: rule <> (negateV e rule) = (negateV e rule) <> rule = Failure"
+  , SC.testProperty "(SC) Complement: validator <> (negateV e validator) = (negateV e validator) <> validator = Failure"
       (complmTest :: (Bool -> Bool, [Bool], [Bool]) -> Bool -> Bool)
-  , QC.testProperty "(QC) Idempotence: rule <> rule = rule"
+  , QC.testProperty "(QC) Idempotence: validator <> validator = validator"
       (idempTest :: (Int -> Bool, String) -> Int -> Bool)
-  , SC.testProperty "(SC) Idempotence: rule <> rule = rule"
+  , SC.testProperty "(SC) Idempotence: validator <> validator = validator"
       (idempTest :: (Bool -> Bool, [Bool]) -> Bool -> Bool)
   ]
   where
-    memptyTest :: Eq a => a -> Bool
-    memptyTest = (==)
-        <$> Success `asTypeOf` const (Failure "")
-        <*> validatify (mempty `asTypeOf` validatorFrom (const True) "")
+    memptyTest :: a -> Bool
+    memptyTest x = (Success () `asTypeOf` Failure "")
+        == runValidator mempty x
     asscTest :: (Eq a, Eq e) => (a -> Bool, e) -> (a -> Bool, e) -> (a -> Bool, e) -> a -> Bool
     asscTest ~(f, err1) (g, err2) (h, err3) x =
-        let ~(rule1, rule2, rule3) = (validatorFrom f err1, validatorFrom g err2, validatorFrom h err3)
-        in (rule1 <> (rule2 <> rule3)) `validatify` x == ((rule1 <> rule2) <> rule3) `validatify` x
-    identTest :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
-    identTest ~(f, err) x = let rule = validatorFrom f err
-        in (rule <> mempty) `validatify` x == rule `validatify` x
-        && (mempty <> rule) `validatify` x == rule `validatify` x
+        let ~(validator1, validator2, validator3) = (validatorFrom f err1, validatorFrom g err2, validatorFrom h err3)
+        in (validator1 <> (validator2 <> validator3)) `runValidator` x == ((validator1 <> validator2) <> validator3) `runValidator` x
+    identTest :: Eq e => (a -> Bool, e) -> a -> Bool
+    identTest ~(f, err) x = let validator = void $ validatorFrom f err
+        in (validator <> mempty) `runValidator` x == validator `runValidator` x
+        && (mempty <> validator) `runValidator` x == validator `runValidator` x
     annihilatorTest :: (Eq a, Eq e, Monoid e) => (a -> Bool, e) -> a -> Bool
-    annihilatorTest ~(f, err) x = let rule = validatorFrom f err
-        in (rule <> failV) `validatify` x == Failure (if f x then mempty else err)
-        && (failV <> rule) `validatify` x == Failure mempty
+    annihilatorTest ~(f, err) x = let validator = validatorFrom f err
+        in (validator <> failV) `runValidator` x == Failure (if f x then mempty else err)
+        && (failV <> validator) `runValidator` x == Failure mempty
     complmTest :: (Eq a, Eq e) => (a -> Bool, e, e) -> a -> Bool
     complmTest ~(f, err, err') x =
-        let rule = validatorFrom f err
-        in let complmRule = negateV err' rule
-        in (rule <> complmRule) `validatify` x == Failure (if f x then err' else err)
-        && (complmRule <> rule) `validatify` x == Failure (if f x then err' else err)
+        let validator = validatorFrom f err
+        in let complmvalidator = negateV err' validator
+        in (validator <> complmvalidator) `runValidator` x == Failure (if f x then err' else err)
+        && (complmvalidator <> validator) `runValidator` x == Failure (if f x then err' else err)
     idempTest :: (Eq a, Eq e) => (a -> Bool, e) -> a -> Bool
-    idempTest ~(f, err) x = let rule = validatorFrom f err
-        in (rule <> rule) `validatify` x == rule `validatify` x
+    idempTest ~(f, err) x = let validator = validatorFrom f err
+        in (validator <> validator) `runValidator` x == validator `runValidator` x
 
 -- | Test the satisfyAny function.
 testSatisfyAny :: [TestTree]
@@ -404,21 +404,21 @@ testSatisfyAny =
   ]
   where
     leftFold1Test :: (Eq a, Eq e, Semigroup e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
-    leftFold1Test predcs x = let rules = uncurry validatorFrom <$> predcs
-        in satisfyAny rules `validatify` x
-        == foldl1 (</>) rules `validatify` x
+    leftFold1Test predcs x = let validators = uncurry validatorFrom <$> predcs
+        in satisfyAny validators `runValidator` x
+        == foldl1 (</>) validators `runValidator` x
     rightFold1Test :: (Eq a, Eq e, Semigroup e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
-    rightFold1Test predcs x = let rules = uncurry validatorFrom <$> predcs
-        in satisfyAny rules `validatify` x
-        == foldr1 (</>) rules `validatify` x
+    rightFold1Test predcs x = let validators = uncurry validatorFrom <$> predcs
+        in satisfyAny validators `runValidator` x
+        == foldr1 (</>) validators `runValidator` x
     leftFoldTest :: (Eq a, Eq e, Monoid e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
-    leftFoldTest predcs x = let rules = uncurry validatorFrom <$> predcs
-        in satisfyAny rules `validatify` x
-        == foldl (</>) failV rules `validatify` x
+    leftFoldTest predcs x = let validators = uncurry validatorFrom <$> predcs
+        in satisfyAny validators `runValidator` x
+        == foldl (</>) failV validators `runValidator` x
     rightFoldTest :: (Eq a, Eq e, Monoid e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
-    rightFoldTest predcs x = let rules = uncurry validatorFrom <$> predcs
-        in satisfyAny rules `validatify` x
-        == foldr (</>) failV rules `validatify` x
+    rightFoldTest predcs x = let validators = uncurry validatorFrom <$> predcs
+        in satisfyAny validators `runValidator` x
+        == foldr (</>) failV validators `runValidator` x
 
 {-# ANN testSatisfyAll "HLint: ignore Use mconcat" #-}
 -- | Test the satisfyAll function.
@@ -446,26 +446,26 @@ testSatisfyAll =
       (rightFoldTest :: NonEmptyLQ (Bool -> Bool, Maybe [Bool]) -> Bool -> Bool)
   ]
   where
-    foldTest :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
-    foldTest predcs x = let rules = uncurry validatorFrom <$> predcs
-        in satisfyAll rules `validatify` x
-        == fold rules `validatify` x
+    foldTest :: Eq e => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    foldTest predcs x = let validators = fmap void $ uncurry validatorFrom <$> predcs
+        in satisfyAll validators `runValidator` x
+        == fold validators `runValidator` x
     leftFold1Test :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
-    leftFold1Test predcs x = let rules = uncurry validatorFrom <$> predcs
-        in satisfyAll rules `validatify` x
-        == foldl1 (<>) rules `validatify` x
+    leftFold1Test predcs x = let validators = uncurry validatorFrom <$> predcs
+        in satisfyAll validators `runValidator` x
+        == foldl1 (<>) validators `runValidator` x
     rightFold1Test :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
-    rightFold1Test predcs x = let rules = uncurry validatorFrom <$> predcs
-        in satisfyAll rules `validatify` x
-        == foldr1 (<>) rules `validatify` x
-    leftFoldTest :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
-    leftFoldTest predcs x = let rules = uncurry validatorFrom <$> predcs
-        in satisfyAll rules `validatify` x
-        == foldl (<>) mempty rules `validatify` x
-    rightFoldTest :: (Eq a, Eq e) => NonEmptyLQ (a -> Bool, e) -> a -> Bool
-    rightFoldTest predcs x = let rules = uncurry validatorFrom <$> predcs
-        in satisfyAll rules `validatify` x
-        == foldr (<>) mempty rules `validatify` x
+    rightFold1Test predcs x = let validators = uncurry validatorFrom <$> predcs
+        in satisfyAll validators `runValidator` x
+        == foldr1 (<>) validators `runValidator` x
+    leftFoldTest :: Eq e => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    leftFoldTest predcs x = let validators = fmap void $ uncurry validatorFrom <$> predcs
+        in satisfyAll validators `runValidator` x
+        == foldl (<>) mempty validators `runValidator` x
+    rightFoldTest :: Eq e => NonEmptyLQ (a -> Bool, e) -> a -> Bool
+    rightFoldTest predcs x = let validators = fmap void $ uncurry validatorFrom <$> predcs
+        in satisfyAll validators `runValidator` x
+        == foldr (<>) mempty validators `runValidator` x
 
 -- | Test Validator combinators.
 testCombs :: [TestTree]

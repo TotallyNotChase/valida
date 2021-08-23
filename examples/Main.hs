@@ -9,7 +9,7 @@ import Data.Char           (isDigit, isSpace)
 import Data.Ix             (Ix (inRange))
 
 import Valida (Validation, Validator (..), failureUnless', label, lengthWithin, minLengthOf, mustContain, optionally,
-               valueWithin, (-?>), (</>))
+               valueWithin, fixV, (-?>), (</>))
 
 data InputForm = InpForm
   { inpName  :: String
@@ -43,12 +43,13 @@ inpFormValidator = InpForm
         <> mustContain '.' NoPeriodInMail
         <> minLengthOf 5 InvalidEmailLength)
     -- Phone may not be provided, if it is - it should be 15 characters long, and correctly formatted
-    <*> inpPhone -?> optionally
-        ( lengthWithin (14, 15) InvalidPhLen
-        <> label
-            (neSingleton IncorrectPhFormat)
+    <*> inpPhone -?> fixV
+        (optionally
+            ( lengthWithin (14, 15) InvalidPhLen
             -- Either Intl format or NA format
-            (failureUnless' isCorrectPhIntl </> failureUnless' isCorrectPhNA)
+            <> label (neSingleton IncorrectPhFormat)
+                (failureUnless' isCorrectPhIntl </> failureUnless' isCorrectPhNA)
+            )
         )
   where
     -- | Format: \+[0-9] [2-9][0-9 ]+

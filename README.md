@@ -4,9 +4,10 @@ Simple, elegant, applicative validation for product types - batteries included!
 Read the documentation on [hackage](https://hackage.haskell.org/package/valida).
 
 # Highlights
-* Minimal - *Zero dependencies* apart from `base`.
-* Batteries included - `ValidationRule` combinators for almost every scenario.
-* Validation without the boiler plate - a highly specialized usage of contravariant functors to conveniently model the common validation usecases, without extra boilerplate.
+* Minimal - Depends only on `base` and `profunctor`.
+* Batteries included - `Validator` combinators for almost every scenario.
+* Validation without the boiler plate - Implementation of contravariance to conveniently model the common validation usecases, without extra boilerplate.
+* Profunctorial, Applicative Validator - Relating to the previous point, the provided `Validator` type is not only an applicative functor, but also a profunctor. This is what allows the contravariance on its input argument.
 
 # Quick Taste
 ```hs
@@ -34,7 +35,7 @@ data FormErr
   | InvalidEmailLength
   deriving (Show)
 
--- | Validator for each field in the input form - built using 'ValidationRule' combinators.
+-- | Validator for each field in the input form - built using 'Validator' combinators.
 inpFormValidator :: Validator (NonEmpty FormErr) InputForm ValidInput
 inpFormValidator = ValidInput
     -- Name should be between 1 and 20 characters long
@@ -42,9 +43,9 @@ inpFormValidator = ValidInput
     -- Age should be between 18 and 120
     <*> inpAge -?> valueWithin (18, 120) InvalidAge
     -- Email, if provided, should contain '@', and '.', and be atleast 5 characters long
-    <*> inpEmail -?> optionally (minLengthOf 5 InvalidEmailLength
+    <*> inpEmail -?> fixV (optionally (minLengthOf 5 InvalidEmailLength
         <> mustContain '@' NoAtCharInMail
-        <> mustContain '.' NoPeriodInMail)
+        <> mustContain '.' NoPeriodInMail))
 
 goodInput :: InputForm
 goodInput = InpForm "John Doe" 42 Nothing
@@ -67,7 +68,7 @@ The primary purpose of the `Validator` type is to validate each field in product
 
 `verify` takes 2 inputs-
 * The "selector", which essentially just takes the product type as input, and returns the specific value of the specific field to validate.
-* The `ValidationRule`, which specifies the predicate the field must satisfy - as well as the error value to yield if it doesn't satisfy said predicate
+* The `Validator`, which specifies the predicate the field must satisfy, the error value to yield if it doesn't satisfy said predicate, and the output upon successful validation.
 
 Let's validate a pair for example, the first field should be an int less than 10, the second field should be a non empty string. Then, the validator would look like-
 ```hs
@@ -92,7 +93,7 @@ Failure ("NotLessThan10" :| ["EmptyString"])
 Failure ("EmptyString" :| [])
 ```
 
-This is the core concept for building the validators. You can use the primitive combinators (e.g [`failureIf`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:failureIf), [`failureUnless`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:failureUnless)) to build `ValidationRule`s directly from predicate functions, or you can choose one of the many derivate combinators (e.g [`notEmpty`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:notEmpty)) to build `ValidationRule`s. Check out the [`Valida.Combinators`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html) module documentation to view all the included combinators.
+This is the core concept for building the validators. You can use the primitive combinators (e.g [`failureIf`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:failureIf), [`failureUnless`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:failureUnless)) to build `Validator`s directly from predicate functions, or you can choose one of the many derivate combinators (e.g [`notEmpty`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:notEmpty)) to build `Validator`s. Check out the [`Valida.Combinators`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html) module documentation to view all the included combinators.
 
 ## Validators for non product types
 Although the primary purpose of Valida is building convenient validators for product types. Sometimes, you'll find yourself not needing to select on any field, but validating the input directly. In that case, you may find yourself using this pattern-
@@ -108,75 +109,77 @@ intValidator :: Validator (NonEmpty String) Int Int
 intValidator = validate (failureIf even "Even")
 ```
 
-## Combining multiple `ValidationRule`s
-Often, you'll find yourself in situations where you expect the input to satisfy *multiple* `ValidationRule`s, or situations where you expect the input to satisfy *at least one* of many `ValidationRule`s. This is where [`andAlso`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:andAlso), and [`orElse`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:orElse) come into play.
+## Combining multiple `Validator`s
+Often, you'll find yourself in situations where you expect the input to satisfy *multiple* `Validator`s (but don't need applicative composition), or situations where you expect the input to satisfy *at least one* of multiple `Validator`s. This is where [`andAlso`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:andAlso), and [`orElse`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:orElse) come into play.
 
-### Combining multiple `ValidationRule`s with `andAlso`
-`andAlso` is the semigroup implementation of `ValidationRule`, and thus is the same as `<>`. Combining 2 rules with `<>` creates a new rule that is only satisfied when *both of the given rules are satisfied*. Otherwise, the very first (left most) failure value is returned - and the rest are not tried.
+### Combining multiple `Validator`s with `andAlso`
+`andAlso` is the semigroup implementation of `Validator`, and thus is the same as `<>`. Combining 2 validators with `<>` creates a new validator that is only satisfied when *both of the given validators are satisfied*.
 
-The following rule only succeeds if the input is **odd**, *and* **not divisble by 3**.
+Otherwise, the **first (left most)** failure value is returned - and the rest are not tried. Upon successful validation, the **right-most** `Success` value is returned. This means that if all validators succeed, only the right-most validator's success value is returned.
+
+The following validator only succeeds if the input is **odd**, *and* **not divisble by 3**.
 ```hs
-rule :: ValidationRule (NonEmpty String) Int
-rule = failureIf even "IsEven" `andAlso` failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
+validator :: Validator (NonEmpty String) Int Int
+validator = failureIf even "IsEven" `andAlso` failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
 ```
 (OR)
 ```hs
-rule :: ValidationRule (NonEmpty String) Int
-rule = failureIf even "IsEven" <> failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
+validator :: Validator (NonEmpty String) Int Int
+validator = failureIf even "IsEven" <> failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
 ```
 
 Usages-
 ```hs
->>> runValidator (validate rule) 5
+>>> runValidator validator 5
 Success 5
->>> runValidator (validate rule) 4
+>>> runValidator validator 4
 Failure ("IsEven" :| [])
->>> runValidator (validate rule) 15
+>>> runValidator validator 15
 Failure ("IsDivisbleBy3" :| [])
->>> runValidator (validate rule) 6
+>>> runValidator validator 6
 Failure ("IsEven" :| [])
 ```
 
-### Combining multiple `ValidationRule`s with `orElse`
-`orElse` also forms a semigroup, `</>` is aliased to `orElse`. Combining 2 rules with `</>` creates a new rule that is satisfied when *either of the given rules are satsified*. If all of them fail, the `Failure` values are accumulated.
+### Combining multiple `Validator`s with `orElse`
+`orElse` also forms a semigroup, `</>` is aliased to `orElse`. Combining 2 validators with `</>` creates a new validator that is satisfied when *either of the given validators are satsified*. If all of them fail, the `Failure` values are **accumulated**. The **left-most** `Success` value is returned, remaining validators are not tried.
 
-The following rule succeeds if the input is *either* **odd**, *or* **not divisble by 3**.
+The following validator succeeds if the input is *either* **odd**, *or* **not divisble by 3**.
 ```hs
-rule :: ValidationRule (NonEmpty String) Int
-rule = failureIf even "IsEven" `orElse` failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
+validator :: Validator (NonEmpty String) Int Int
+validator = failureIf even "IsEven" `orElse` failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
 ```
 (OR)
 ```hs
-rule :: ValidationRule (NonEmpty String) Int
-rule = failureIf even "IsEven" </> failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
+validator :: Validator (NonEmpty String) Int Int
+validator = failureIf even "IsEven" </> failureIf ((==0) . flip mod 3) "IsDivisbleBy3"
 ```
 
 Usages-
 ```hs
->>> runValidator (validate rule) 5
+>>> runValidator validator 5
 Success 5
->>> runValidator (validate rule) 4
+>>> runValidator validator 4
 Success 4
->>> runValidator (validate rule) 15
+>>> runValidator validator 15
 Success 15
->>> runValidator (validate rule) 6
+>>> runValidator validator 6
 Failure ("IsEven" :| ["IsDivisbleBy3"])
 ```
 
-### Combining a foldable of `ValidationRule`s
-You can combine a foldable of `ValidationRule`s using [`satisfyAll`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:satisfyAll) and [`satisfyAny`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:satisfyAny). `satisfyAll` folds using `andAlso`/`<>`, while `satisfyAny` folds using `orElse`/`</>`.
+### Combining a foldable of `Validator`s
+You can combine a foldable of `Validator`s using [`satisfyAll`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:satisfyAll) and [`satisfyAny`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:satisfyAny). `satisfyAll` folds using `andAlso`/`<>`, while `satisfyAny` folds using `orElse`/`</>`.
 
 ## Ignoring errors
-Although, highly inadvisable and generally not useful in serious code, you may use alternative versions of `ValidationRule` combinators that use `()` (unit) as its error type so you don't have to supply error values. For example, [`failureIf'`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:failureIf-39-) does not require an error value to be supplied. In case of failure, it simply yields `Failure ()`.
+Although, highly inadvisable and generally not useful in serious code, you may use alternative versions of `Validator` combinators that use `()` (unit) as the error type so you don't have to supply error values. For example, [`failureIf'`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:failureIf-39-) does not require an error value to be supplied. In case of failure, it simply yields `Failure ()`.
 ```hs
->>> runValidator (validate (failureIf' even)) 2
+>>> runValidator (failureIf' even) 2
 Failure ()
 ```
 
 ## Re-assigning errors
-Using the [`label`](https://hackage.haskell.org/package/valida/docs/Valida.html#v:label)/[`<?>`](https://hackage.haskell.org/package/valida/docs/Valida.html#v:-60--63--62-) and [`labelV`](https://hackage.haskell.org/package/valida/docs/Valida.html#v:labelV)/[`<??>`](https://hackage.haskell.org/package/valida/docs/Valida.html#v:-60--63--63--62-) functions, you can use override the errors `ValidationRule`s and `Validator`s yield.
+Using the [`label`](https://hackage.haskell.org/package/valida/docs/Valida.html#v:label)/[`<?>`](https://hackage.haskell.org/package/valida/docs/Valida.html#v:-60--63--62-) function, you can override the errors `Validator`s yield.
 
-For example, to re assign the error on a `ValidationRule`-
+For example, to re assign the error on a `Validator`-
 ```hs
 label "IsEven" (failureIf even "Foo")
 ```
@@ -185,19 +188,50 @@ label "IsEven" (failureIf even "Foo")
 failureIf even "Foo" <?> "IsEven"
 ```
 
-This is useful with `ValidationRule`s that use unit as their error type. You can create a `ValidationRule`, skip assigning an error to it - and label a specific error when you need it later.
+This is useful with `Validator`s that use unit as their error type. You can create a `Validator`, skip assigning an error to it - and label a specific error when you need to later.
 ```hs
 label "IsEven" (failureIf' even)
 ```
 
-Re-labeled `ValidationRule`s will yield the newly assigned error value when the rule is not satisfied.
+Re-labeled `Validator`s will yield the newly assigned error value when the validator is not satisfied.
 
-Similarly, `labelV` (or `<??>`) can be used to relabel the error value of an entire `Validator`.
+# Core Idea
+All usecases of applicative validation, involving validation of product types, have one noticable thing in common. A well written validator typically looks something like-
+```hs
+data InputForm = InpForm
+  { inpName :: String
+  , inpAge  :: Int
+  , inpDate :: String
+  } deriving (Show)
 
-## Wait, couldn't this be done using contravariant functors?
-Yes! The concept of *keeping the input of a `Validator`* set to the same product type, but *letting it validate a specific field* of said input, can be generalized to contravariant functors. The `Validator` type looks like- `Validator e inp a`, to keep applicative composition working, the `inp` needs to stay the same - but each validator within said composition should also be able to *consume* a specific part of the `inp`. `ValidationRule` itself, is the typical example of a contravariant functor as well. It's essentially a specialized predicate function- `a -> Validation e ()`. The `verify` function simply combines these 2 *potentially generalizable* contravariant functors, into a very specialized usecase.
+validateName :: String -> Validation [String] String
+validateAge  :: Int -> Validation [String] Int
+validateDate :: String -> Validation [String] String
 
-I do think adding instances for actual generalized contravariant functors/profunctors for `ValidationRule` and `Validator`, *could* be more powerful, while also being able to provide the same specialized functions. However, I've refrained from doing so as I didn't want to pull in the extra dependencies. I think the separation of `ValidationRule` and `Validator`, combined with the provided functions, *should* be able to reliably, and elegantly model any scenario of building a validator. I have yet to find a usecase where the generalized contravariant instances *would be significantly useful*. But it could certainly be more idiomatic for haskell. I may consider creating a package that *does* go the contravariant/profunctor route though.
+validateForm :: InputForm -> Validation [String] InputForm
+validateForm form = InputForm
+  <$> validateName (inpName form)
+  <*> validateAge (inpAge form)
+  <*> validateDate (inpDate form)
+```
+
+There's a few things wrong with this. The functions `validateName`, `validateAge`, and `validateDate` are defined elsewhere - but all of their definitions are really similar. Yet, without handy combinators - they can't be defined in a terse way. However, the bigger problem, is how all of the validators need to be fed their specific input by selecting the field from the product type. It could look better if the validator functions could somehow just be linked to a specific field selector in an elegant way. Something like `name -?> validateName`, perhaps.
+
+This is the perfect usecase for contravariance. A validation function, is really just a [`Predicate`](https://hackage.haskell.org/package/base-4.14.1.0/docs/Data-Functor-Contravariant.html#t:Predicate), the idiomatic example of a contravariant functor. However, it *also* needs to be an applicative functor to allow for the elegant composition. In fact, the type of a validation function needs to parameterize on 3 types - `inp -> Validation e a`
+* The input type
+* The error type
+* The output type
+
+The output is covariant, but the input is contravariant. This is a [Profunctor](https://hackage.haskell.org/package/profunctors-5.6.2/docs/Data-Profunctor.html)! With a profunctorial validator, you now have the ability to *not only* map the output type, *but also* contramap the input type.
+
+Given a validator that makes sure an int input is even, and returns said int input as output - `evenValidator`, you can *easily* use it in the applicative validation of a `(Int, Int)` using `lmap`-
+```hs
+(,) <$> lmap fst evenValidator <*> lmap snd evenValidator
+```
+
+Contravariant input, mixed with covariant output - is the bread and butter of Valida! It allows for elegant encoding of well composable validators using only 2 simple concepts.
+
+There's one more core idea that `Valida` uses though - `fixV`. `fixV` "fixes" a validator's output, to be the same as its input. `fmap` lets you *map* over the output, `lmap` lets you *contramap* over the input, `fixV` allows `fmap` to now *map* over the input value, on the output position. `fixV` also allows you to regain the input value in the output position if a validator has been `fmap`ed on.
 
 # Comparison and Motivation
 The concept of the `Validation` data type used in this package isn't new. It's also used in the following packages-
@@ -207,6 +241,6 @@ The concept of the `Validation` data type used in this package isn't new. It's a
 
 Valida aims to be a minimal in terms of dependencies, but batteries included in terms of API. It borrows many philosophies from `Data.Validation` (from `validation`) and `Validation` (from `validation-selective`), and aims to provide a convenient, minimal way to model the common usecases of them.
 
-The `verify` function, combined with the `ValidationRule` combinators, and the parsec-esque `Validator` aims to assist in easily modeling typical validation usecases without too much boilerplate. The core idea, really, is [contravariance](#wait-couldnt-this-be-done-using-contravariant-functors) - the typical usecases, especially when validating product types (the most common target of validation), simply showcases contravariant functors.
+The `verify` function, combined with the built in `Validator` combinators, and the parsec-esque `Validator` aims to assist in easily modeling typical validation usecases without too much boilerplate, using applicative composition and contravariant input.
 
 In essence, the validation style itself, is designed to look like [forma](https://hackage.haskell.org/package/forma). Though the actual types, and core concepts are significantly different.

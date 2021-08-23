@@ -23,7 +23,7 @@ module Valida
     , Validator (runValidator)
       -- * Building and modifying 'Validator's
       --
-    , selectV
+    , validateOn
     , verify
       --
     , fixV
@@ -47,7 +47,7 @@ import Valida.Validator       (Validator (..))
 
 {- | An alias to 'lmap' specialized to 'Validator'.
 
-'selectV' allows a validator taking input 'b' to work with input 'a', provided a function of type: @a -> b@.
+'validateOn' allows a validator taking input 'b' to work with input 'a', provided a function of type: @a -> b@.
 
 The new 'Validator` first runs the __selector__ on its input to obtain the validation target. Then, it runs the
 predicate on the target.
@@ -56,7 +56,45 @@ If validation is successful, the the *original* output is put into the 'Validati
 
 ==== __Examples__
 
-This is the primary function for building validators for product types.
+This is the one of the primary functions to build validators for product types.
+This works very similar to 'verify', except that it doesn't 'fixV' the validator.
+Since the primitive and derivative combinators all fix their validator themselves, this difference doesn't come up with them.
+
+>>> let pairValidator = (,)
+  <$> (notEmpty "EmptyString") `validateOn` fst
+  <*> (failureIf (<10) "LessThan10") `validateOn` snd
+>>> runValidator pairValidator ("foo", 12)
+Success ("foo",12)
+>>> runValidator pairValidator ("", 12)
+Failure ("EmptyString" :| [])
+>>> runValidator pairValidator ("foo", 9)
+Failure ("LessThan10" :| [])
+>>> runValidator pairValidator ("", 9)
+Failure ("EmptyString" :| ["LessThan10"])
+
+If you used a non fixed validator however, such as one built with 'optionally', the difference becomes apparent.
+>>> let notFixedVal = optionally (failureIf even "Even")
+>>> let fixedVal = fixV (optionally (failureIf even "Even"))
+>>> runValidator (notFixedVal `validateOn` fst) (Just 1, ())
+Success ()
+>>> runValidator (fixedVal `validateOn` fst) (Just 1, ())
+Success (Just 1)
+>>> runValidator (verify notFixedVal fst) (Just 1, ())
+Success (Just 1)
+>>> runValidator (verify fixedVal fst) (Just 1, ())
+Success (Just 1)
+-}
+validateOn :: Validator e b x -> (a -> b) -> Validator e a x
+validateOn = flip lmap
+
+{- | 'fixV' given validator, and 'validateOn' (i.e 'lmap') given selector over it.
+
+This is the same as 'validateOn' except that it 'fixV's the given validator first. On already fixed validators (such as
+those returned by all primitive and derivative combinators), 'verify' is the same as 'validateOn'.
+
+==== __Examples__
+
+This is one of the primary functions to build validators for product types.
 To validate a pair, the most basic product type, such that the first element is a non empty string, and the second
 element is a number greater than 9, you can use:
 
@@ -72,14 +110,6 @@ Failure ("LessThan10" :| [])
 >>> runValidator pairValidator ("", 9)
 Failure ("EmptyString" :| ["LessThan10"])
 -}
-selectV :: Validator e b x -> (a -> b) -> Validator e a x
-selectV = flip lmap
-
-{- | 'fixV' given validator, and 'selectV' (i.e 'lmap') given selector over it.
-
-This is the same as 'selectV' except that it 'fixV's the given validator first. On already fixed validators (such as
-those returned by all primitive and derivative combinators), 'verify' is the same as 'selectV'.
--}
 verify :: Validator e b x -> (a -> b) -> Validator e a b
 verify vald selector = selector -|?> fixV vald
 
@@ -89,11 +119,11 @@ infix 5 -?>
 (-?>) :: (a -> b) -> Validator e b x -> Validator e a b
 (-?>) = flip verify
 
--- | A synonym for 'selectV' with its arguments flipped.
+-- | A synonym for 'validateOn' with its arguments flipped.
 infix 5 -|?>
 
 (-|?>) :: (a -> b) -> Validator e b x -> Validator e a x
-(-|?>) = flip selectV
+(-|?>) = flip validateOn
 
 {- | Fix a validator's output to be the same as its input.
 

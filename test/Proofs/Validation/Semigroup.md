@@ -10,6 +10,14 @@ data Validation e a = Failure e | Success a
 Success a <> _         = Success a                                         {- (i) -}
 _         <> Success a = Success a                                         {- (ii) -}
 Failure x <> Failure y = Failure (x <> y)                                  {- (iii) -}
+{- Simplified -}
+
+{- Original version:-
+
+Failure x <> Failure y = Failure (x <> y)
+Failure _ <> b         = b
+a         <> _         = a
+-}
 ```
 
 ## Associativity law

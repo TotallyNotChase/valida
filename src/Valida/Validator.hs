@@ -33,23 +33,20 @@ newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a }
   deriving (Typeable, Generic)
 
 {- |
-
 [@fmap@] 'fmap' maps given function over the 'Validation' result by re-using 'fmap' on it.
 
 __Examples__
 
->>> runValidator (fmap (+1) (fixV $ failureIf (==2) "IsTwo")) 3
+>>> runValidator (fmap (+1) (failureIf (==2) "IsTwo")) 3
 Success 4
->>> runValidator (fmap (+1) (fixV $ failureIf (==2) "IsTwo")) 2
+>>> runValidator (fmap (+1) (failureIf (==2) "IsTwo")) 2
 Failure ("IsTwo" :| [])
 -}
 instance Functor (Validator e inp) where
     fmap f (Validator v) = Validator $ fmap f . v
 
 {- |
-
 [@pure@] 'pure' creates a 'Validator' that always yields given value wrapped in 'Success', ignoring its input.
-
 [@(\<*\>)@] '(<*>)' runs 2 validators to obtain the 2 'Validation' results and combines them with '(<*>)'.
 This can be understood as-
 
@@ -63,13 +60,11 @@ __Examples__
 
 >>> runValidator (pure 5) 42
 Success 5
->>> let v1 = fixV (failureIf (==2) "IsTwo")
->>> let v2 = fixV (failureIf even "IsEven")
->>> runValidator (const <$> v1 <*> v2) 5
+>>> runValidator (const <$> failureIf (==2) "IsTwo" <*> failureIf even "IsEven") 5
 Success 5
->>> runValidator (const <$> v1 <*> v2) 4
+>>> runValidator (const <$> failureIf (==2) "IsTwo" <*> failureIf even "IsEven") 4
 Failure ("IsEven" :| [])
->>> runValidator (const <$> v1 <*> v2) 2
+>>> runValidator (const <$> failureIf (==2) "IsTwo" <*> failureIf even "IsEven") 2
 Failure ("IsTwo" :| ["IsEven"])
 -}
 instance Semigroup e => Applicative (Validator e inp) where
@@ -82,7 +77,6 @@ instance Semigroup e => Applicative (Validator e inp) where
     {-# INLINEABLE (<*>) #-}
 
 {- |
-
 [@(<>)@] '(<>)' builds a validator that /succeeds/ only if both of the given validators succeed.
 __Left-most__ failure is returned, other validator /is not used/ if one fails. If all validators succeed,
 __right-most__ success is returned.

@@ -92,11 +92,11 @@ import Valida.Validator      (Validator (Validator))
 
 ==== __Examples__
 
->>> runValidator (fixV (failureIf (>0) "Positive")) 5 ()
+>>> runValidator (failureIf (>0) "Positive") 5
 Failure ("Positive" :| [])
->>> runValidator (fixV (failureIf (>0) "Positive")) 0 ()
+>>> runValidator (failureIf (>0) "Positive") 0
 Success 0
->>> runValidator (fixV (failureIf (>0) "Positive")) (-1) ()
+>>> runValidator (failureIf (>0) "Positive") (-1)
 Success (-1)
 -}
 failureIf :: (a -> Bool) -> e -> Validator (NonEmpty e) a a
@@ -108,11 +108,11 @@ failureIf predc = validatorFrom (not . predc) . neSingleton
 
 ==== __Examples__
 
->>> runValidator (fixV (failureUnless (>0) "NonPositive")) 5 ()
+>>> runValidator (failureUnless (>0) "NonPositive") 5
 Success 5
->>> runValidator (fixV (failureUnless (>0) "NonPositive")) 0 ()
+>>> runValidator (failureUnless (>0) "NonPositive") 0
 Failure ("NonPositive" :| [])
->>> runValidator (fixV (failureUnless (>0) "NonPositive")) (-1) ()
+>>> runValidator (failureUnless (>0) "NonPositive") (-1)
 Failure ("NonPositive" :| [])
 -}
 failureUnless :: (a -> Bool) -> e -> Validator (NonEmpty e) a a
@@ -130,11 +130,11 @@ failureUnless predc = validatorFrom predc . neSingleton
 
 ==== __Examples__
 
->>> runValidator (fixV (failureIf' (>0))) 5 ()
+>>> runValidator (failureIf' (>0)) 5
 Failure ()
->>> runValidator (fixV (failureIf' (>0))) 0 ()
+>>> runValidator (failureIf' (>0)) 0
 Success 0
->>> runValidator (fixV (failureIf' (>0))) (-1) ()
+>>> runValidator (failureIf' (>0)) (-1)
 Success (-1)
 -}
 failureIf' :: (a -> Bool) -> Validator () a a
@@ -148,11 +148,11 @@ failureIf' predc = validatorFrom (not . predc) ()
 
 ==== __Examples__
 
->>> runValidator (fixV (failureUnless' (>0))) 5 ()
+>>> runValidator (failureUnless' (>0)) 5
 Success 5
->>> runValidator (fixV (failureUnless' (>0))) 0 ()
+>>> runValidator (failureUnless' (>0)) 0
 Failure ()
->>> runValidator (fixV (failureUnless' (>0))) (-1) ()
+>>> runValidator (failureUnless' (>0)) (-1)
 Failure ()
 -}
 failureUnless' :: (a -> Bool) -> Validator () a a
@@ -423,11 +423,11 @@ __Note__: This will set the output of the 'Validator' to be the same as its inpu
 ==== __Examples__
 
 >>> let vald = negateV "NonPositive" (failureIf (>0) "Positive")
->>> runValidator (fixV vald) 5 ()
+>>> runValidator vald 5
 Success 5
->>> runValidator (fixV vald) 0 ()
+>>> runValidator vald 0
 Failure "NonPositive"
->>> runValidator (fixV vald) (-1) ()
+>>> runValidator vald (-1)
 Failure "NonPositive"
 -}
 negateV :: e -> Validator e1 a x -> Validator e a a
@@ -467,13 +467,13 @@ Other validator /is not used/ if first one succeeds.
 ==== __Examples__
 
 >>> let vald = failureIf (>0) "Positive" `orElse` failureIf even "Even"
->>> runValidator (fixV vald) 5 ()
+>>> runValidator vald 5
 Success 5
->>> runValidator (fixV vald) 4 ()
+>>> runValidator vald 4
 Failure ("Positive" :| ["Even"])
->>> runValidator (fixV vald) 0 ()
+>>> runValidator vald 0
 Success 0
->>> runValidator (fixV vald) (-1) ()
+>>> runValidator vald (-1)
 Success (-1)
 -}
 orElse :: Semigroup e => Validator e inp a -> Validator e inp a -> Validator e inp a
@@ -488,8 +488,8 @@ orElse = (</>)
 
 ==== __Examples__
 
->>> runValidator (fixV failV) 42 ()
-Failure ()
+>>> runValidator (failV :: Validator String Int Int) 42
+Failure ""
 -}
 failV :: Monoid e => Validator e inp a
 failV = Validator $ const $ Failure mempty
@@ -510,11 +510,11 @@ This is the same as the semigroup operation (i.e '(<>)') on 'Validator'.
 ==== __Examples__
 
 >>> let vald = failureIf (>0) "Positive" `andAlso` failureIf even "Even"
->>> runValidator (fixV vald) 5 ()
+>>> runValidator vald 5
 Failure ("Positive" :| [])
->>> runValidator (fixV vald) (-2) ()
+>>> runValidator vald (-2)
 Failure ("Even" :| [])
->>> runValidator (fixV vald) (-1) ()
+>>> runValidator vald (-1)
 Success (-1)
 -}
 andAlso :: Validator e inp a -> Validator e inp a -> Validator e inp a
@@ -571,11 +571,11 @@ __Note__: This sets the output of the new validator to /unit/.
 
 ==== __Examples__
 
->>> runValidator (fixV (optionally (failureIf even "Even"))) (Just 5) ()
+>>> runValidator (fixV (optionally (failureIf even "Even"))) (Just 5)
 Success (Just 5)
->>> runValidator (fixV (optionally (failureIf even "Even"))) (Just 6) ()
+>>> runValidator (fixV (optionally (failureIf even "Even"))) (Just 6)
 Failure ("Even" :| [])
->>> runValidator (fixV (optionally (failureIf even "Even"))) Nothing ()
+>>> runValidator (fixV (optionally (failureIf even "Even"))) Nothing
 Success Nothing
 -}
 optionally :: Validator e inp a -> Validator e (Maybe inp) ()

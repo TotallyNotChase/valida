@@ -96,7 +96,15 @@ instance Semigroup (Validator e inp a) where
     Validator v1 <> Validator v2 = Validator $ \x -> case (v1 x, v2 x) of
         (f@(Failure _), _) -> f
         (_, b)             -> b
+{- |
 
+[@mempty@] 'mempty' is a validator that always succeeds and uses /unit/ as output type.
+
+__Examples__
+
+>>> runValidator (mempty :: Validator String Int ()) 42
+Success ()
+-}
 instance Monoid (Validator e inp ()) where
     mempty = Validator $ const $ Success ()
 

@@ -80,26 +80,31 @@ infix 5 -?>
 @fixV . fixV = 'id' . fixV@
 @'fmap' ('const' x) .  fixV = 'fmap' ('const' x)@
 
+__Note__: The primitive and derivative combinators already fix the validator output to be the same as its input.
+
 ==== __Examples__
 
-The combinators from "Valida.Combinators" use /Unit/ as 'Validator' output type.
-This is important for the 'Validator' semigroup operations to /make sense/.
-Once the 'Validator' has been built as you desire, and encodes all "rules" for validation - use fixV to fix its output to its input.
+This is useful for regaining the input value in the output position after multiple 'fmap's.
 
-This allows for the applicative validation flow. The 'Validator' needs to yield its input, as output, so it can be composed using '(<*>)'.
+Assume we have a validator that fails when input number is even-
+>>> let evenValidator = failureIf even "Even"
 
->>> runValidator (fixV $ failureIf even "Even" <> failureIf (<0) "Negative") 5
+This validator, when run, will yield its input value, wrapped in 'Success', if input is not even. 'fixV' would be redundant on this.
+
+However, if the output was 'fmap'ed to be something else-
+>>> let evenValidator' = fmap (:[]) evenValidator
+
+Now the output type is `[Int]`. The value of the output is no longer the same as the input. If we needed to get the
+original input back into the output, 'fixV' would be the right choice.
+
+>>> let evenValidator'' = fixV evenValidator'
+
+'evenValidator''' is now the exact same as 'evenValidator', which was fixed from the start.
+
+>>> (("foo" <$ failureIf even "Even") <> ("bar" <$ failureIf (<0) "Negative")) `runValidator` 5
+Success "bar"
+>>> fixV (("foo" <$ failureIf even "Even") <> ("bar" <$ failureIf (<0) "Negative")) `runValidator` 5
 Success 5
->>> runValidator (fixV $ failureIf even "Even" <> failureIf (<0) "Negative") 2
-Failure ("Even" :| [])
->>> runValidator (fixV $ failureIf even "Even" <> failureIf (<0) "Negative") (-3)
-Failure ("Negative" :| [])
->>> runValidator (fixV $ failureIf even "Even" <> failureIf (<0) "Negative") (-2)
-Failure ("Even" :| [])
-
-Without 'fixV', it'd instead yield 'Success ()' on success.
->>> runValidator (failureIf even "Even" <> failureIf (<0) "Negative") 5
-
 -}
 fixV :: Validator e a x -> Validator e a a
 fixV (Validator v) = Validator $ \x -> x <$ v x

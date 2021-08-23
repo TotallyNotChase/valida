@@ -22,8 +22,12 @@ module Valida
       Validation (..)
     , Validator (runValidator)
       -- * Building and modifying 'Validator's
-    , fixV
+      --
     , verify
+      --
+    , fixV
+      --
+    , selectV
     , (-?>)
       -- * Reassigning errors
     , label
@@ -41,12 +45,14 @@ import Valida.Validation      (Validation (..))
 import Valida.ValidationUtils
 import Valida.Validator       (Validator (..))
 
-{- | 'fixV' given validator, and 'lmap' given selector over it.
+{- | An alias to 'lmap' specialized to 'Validator'.
+
+'selectV' allows a validator taking input 'b' to work with input 'a', provided a function of type: @a -> b@.
 
 The new 'Validator` first runs the __selector__ on its input to obtain the validation target. Then, it runs the
 predicate on the target.
 
-If validation is successful, the the *original* input (not validation target) is put into the 'Validation' result.
+If validation is successful, the the *original* output is put into the 'Validation' result.
 
 ==== __Examples__
 
@@ -66,14 +72,21 @@ Failure ("LessThan10" :| [])
 >>> runValidator pairValidator ("", 9)
 Failure ("EmptyString" :| ["LessThan10"])
 -}
-verify :: Validator e b x -> (a -> b) -> Validator e a b
-verify vald selector = lmap selector $ fixV vald
+selectV :: Validator e b x -> (a -> b) -> Validator e a x
+selectV = flip lmap
 
--- | A synonym for 'verify' with its arguments flipped.
+{- | 'fixV' given validator, and 'selectV' (i.e 'lmap') given selector over it.
+
+This is the same as 'selectV' except that it 'fixV's the given validator first.
+-}
+verify :: Validator e b x -> (a -> b) -> Validator e a b
+verify vald selector = selector -?> fixV vald
+
+-- | A synonym for 'selectV' with its arguments flipped.
 infix 5 -?>
 
-(-?>) :: (a -> b) -> Validator e b x -> Validator e a b
-(-?>) = flip verify
+(-?>) :: (a -> b) -> Validator e b x -> Validator e a x
+(-?>) = flip selectV
 
 {- | Fix a validator's output to be the same as its input.
 

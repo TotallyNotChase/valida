@@ -1,5 +1,6 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE Safe          #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE Safe              #-}
 
 module Valida.Validator
     ( Validator (..)
@@ -102,8 +103,8 @@ instance Semigroup (Validator e inp a) where
         (f@(Failure _), _) -> f
         (_, b)             -> b
 
-instance Monoid a => Monoid (Validator e inp a) where
-    mempty = Validator $ const $ Success mempty
+instance Monoid (Validator e inp ()) where
+    mempty = Validator $ const $ Success ()
 
 {- |
 

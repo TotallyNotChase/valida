@@ -88,9 +88,9 @@ instance Semigroup e => Semigroup (Validation e a) where
     {-# SPECIALIZE instance Semigroup (Validation (NonEmpty err) a) #-}
     {-# SPECIALIZE instance Semigroup (Validation () a) #-}
     {-# SPECIALIZE instance Semigroup (Validation [err] a) #-}
-    s@(Success _) <> _             = s
-    _             <> s@(Success _) = s
-    Failure x     <> Failure y     = Failure $ x <> y
+    Failure x <> Failure y = Failure $ x <> y
+    Failure _ <> b         = b
+    a         <> _         = a
     {-# INLINEABLE (<>) #-}
 
 {- |

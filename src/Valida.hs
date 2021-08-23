@@ -23,12 +23,12 @@ module Valida
     , Validator (runValidator)
       -- * Building and modifying 'Validator's
       --
+    , selectV
     , verify
       --
     , fixV
-      --
-    , selectV
     , (-?>)
+    , (-|?>)
       -- * Reassigning errors
     , label
     , (<?>)
@@ -77,23 +77,31 @@ selectV = flip lmap
 
 {- | 'fixV' given validator, and 'selectV' (i.e 'lmap') given selector over it.
 
-This is the same as 'selectV' except that it 'fixV's the given validator first.
+This is the same as 'selectV' except that it 'fixV's the given validator first. On already fixed validators (such as
+those returned by all primitive and derivative combinators), 'verify' is the same as 'selectV'.
 -}
 verify :: Validator e b x -> (a -> b) -> Validator e a b
-verify vald selector = selector -?> fixV vald
+verify vald selector = selector -|?> fixV vald
 
--- | A synonym for 'selectV' with its arguments flipped.
+-- | A synonym for 'verify' with its arguments flipped.
 infix 5 -?>
 
-(-?>) :: (a -> b) -> Validator e b x -> Validator e a x
-(-?>) = flip selectV
+(-?>) :: (a -> b) -> Validator e b x -> Validator e a b
+(-?>) = flip verify
+
+-- | A synonym for 'selectV' with its arguments flipped.
+infix 5 -|?>
+
+(-|?>) :: (a -> b) -> Validator e b x -> Validator e a x
+(-|?>) = flip selectV
 
 {- | Fix a validator's output to be the same as its input.
 
 @fixV . fixV = 'id' . fixV@
 @'fmap' ('const' x) .  fixV = 'fmap' ('const' x)@
 
-__Note__: The primitive and derivative combinators already fix the validator output to be the same as its input.
+__Note__: The primitive and derivative combinators already fix the validator output to be the
+same as its input.
 
 ==== __Examples__
 

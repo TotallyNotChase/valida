@@ -14,7 +14,7 @@ This module is re-exported by "Valida". You probably don't need to import this.
 This module exports the primitive, as well as utility, 'Validator' combinators.
 As well as the 'orElse', 'andAlso', 'satisfyAny', and 'satisfyAll' functions, and some more utilities.
 
-__Note__: All the primitive combinators (and derivative combinators) use the same type for @inp@ and @a@.
+__Note__: All the primitive combinators and derivative combinators use the same type for @inp@ and @a@.
 In those cases - upon successful validation, the input itself, wrapped in 'Success', is returned.
 -}
 
@@ -566,6 +566,8 @@ satisfyAll = foldr1 andAlso
 {- | Build a validator that runs given validator only if input is 'Just'.
 
 Yields 'Success' when input is 'Nothing'.
+
+__Note__: This sets the output of the new validator to /unit/.
 
 ==== __Examples__
 

@@ -23,7 +23,10 @@ The type can be understood as-
       Error type  |-- The input on which validation is run
 
 Validators are run using the __runValidator__ function.
-The result is of type __Validation e a__, corresponding to the type params of the same name on 'Validator'
+The result is of type __Validation e a__, corresponding to the type params of the same name on 'Validator'.
+
+__Note__: All the primitive combinators (and derivative combinators) use the same type for @inp@ and @a@.
+In those cases - upon successful validation, the input itself, wrapped in 'Success', is returned.
 -}
 newtype Validator e inp a = Validator { runValidator :: inp -> Validation e a }
   deriving (Typeable, Generic)
@@ -80,7 +83,8 @@ instance Semigroup e => Applicative (Validator e inp) where
 {- |
 
 [@(<>)@] '(<>)' builds a validator that /succeeds/ only if both of the given validators succeed.
-Left-most failure is returned, other validator is not used if one fails.
+__Left-most__ failure is returned, other validator /is not used/ if one fails. If all validators succeed,
+__right-most__ success is returned.
 
 __Examples__
 

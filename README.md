@@ -4,7 +4,9 @@ Simple, elegant, applicative validation for product types - batteries included!
 Read the documentation on [hackage](https://hackage.haskell.org/package/valida).
 
 # Highlights
-* Minimal - Depends only on `base` and `profunctor`.
+* Minimal - **Singular** external dependency: profunctors.
+
+  If you'd like a more lightweight version. Checkout [valida-base](https://hackage.haskell.org/package/valida-base), which offers similar functionalites *without **any** external dependency*.
 * Batteries included - `Validator` combinators for almost every scenario.
 * Validation without the boiler plate - Implementation of contravariance to conveniently model the common validation usecases, without extra boilerplate.
 * Profunctorial, Applicative Validator - Relating to the previous point, the provided `Validator` type is not only an applicative functor, but also a profunctor. This is what allows the contravariance on its input argument.

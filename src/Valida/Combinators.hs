@@ -571,15 +571,15 @@ __Note__: This sets the output of the new validator to /unit/.
 
 ==== __Examples__
 
->>> runValidator (fixV (optionally (failureIf even "Even"))) (Just 5)
+>>> runValidator (optionally (failureIf even "Even")) (Just 5)
 Success (Just 5)
->>> runValidator (fixV (optionally (failureIf even "Even"))) (Just 6)
+>>> runValidator (optionally (failureIf even "Even"))) (Just 6)
 Failure ("Even" :| [])
->>> runValidator (fixV (optionally (failureIf even "Even"))) Nothing
+>>> runValidator (optionally (failureIf even "Even")) Nothing
 Success Nothing
 -}
-optionally :: Validator e inp a -> Validator e (Maybe inp) ()
-optionally (Validator v) = Validator $ maybe (Success ()) (void . v)
+optionally :: Validator e a x -> Validator e (Maybe a) (Maybe a)
+optionally (Validator v) = Validator $ \x -> maybe (Success x) (fmap (const x) . v) x
 
 -- | Utility to convert a regular predicate function to a 'Validator'. __INTERNAL__
 validatorFrom :: (a -> Bool) -> e -> Validator e a a

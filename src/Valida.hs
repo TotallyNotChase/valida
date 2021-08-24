@@ -43,7 +43,7 @@ import Valida.Validator       (Validator (..))
 
 {- | An alias to 'lmap' specialized to 'Validator'.
 
-'verify' allows a validator taking input 'b' to work with input 'a', provided a function of type: @a -> b@.
+'verify' allows a validator taking input /b/ to work with input /a/, provided a function of type: @a -> b@.
 
 The new 'Validator` first runs the __selector__ on its input to obtain the validation target. Then, it runs the
 predicate on the target.
@@ -102,7 +102,7 @@ original input back into the output, 'fixV' would be the right choice.
 
 >>> let evenValidator'' = fixV evenValidator'
 
-'evenValidator''' is now the exact same as 'evenValidator', which was fixed from the start.
+evenValidator'' is now the exact same as evenValidator, which was fixed from the start.
 
 >>> (("foo" <$ failureIf even "Even") <> ("bar" <$ failureIf (<0) "Negative")) `runValidator` 5
 Success "bar"

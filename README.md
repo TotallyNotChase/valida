@@ -45,7 +45,7 @@ inpFormValidator = ValidInput
     -- Age should be between 18 and 120
     <*> inpAge -?> valueWithin (18, 120) InvalidAge
     -- Email, if provided, should contain '@', and '.', and be atleast 5 characters long
-    <*> inpEmail -?> fixV (optionally (minLengthOf 5 InvalidEmailLength
+    <*> inpEmail -?> optionally (minLengthOf 5 InvalidEmailLength
         <> mustContain '@' NoAtCharInMail
         <> mustContain '.' NoPeriodInMail))
 

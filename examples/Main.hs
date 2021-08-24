@@ -43,13 +43,11 @@ inpFormValidator = InpForm
         <> mustContain '.' NoPeriodInMail
         <> minLengthOf 5 InvalidEmailLength)
     -- Phone may not be provided, if it is - it should be 15 characters long, and correctly formatted
-    <*> inpPhone -?> fixV
-        (optionally
-            ( lengthWithin (14, 15) InvalidPhLen
-            -- Either Intl format or NA format
-            <> label (neSingleton IncorrectPhFormat)
-                (failureUnless' isCorrectPhIntl </> failureUnless' isCorrectPhNA)
-            )
+    <*> inpPhone -?> optionally
+        ( lengthWithin (14, 15) InvalidPhLen
+        -- Either Intl format or NA format
+        <> label (neSingleton IncorrectPhFormat)
+            (failureUnless' isCorrectPhIntl </> failureUnless' isCorrectPhNA)
         )
   where
     -- | Format: \+[0-9] [2-9][0-9 ]+

@@ -74,7 +74,6 @@ module Valida.Combinators
     , optionally
     ) where
 
-import Data.Functor       (void)
 import Data.Ix            (Ix (inRange))
 import Data.List.NonEmpty (NonEmpty)
 

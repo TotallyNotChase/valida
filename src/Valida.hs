@@ -59,6 +59,7 @@ element is a number greater than 9, you can use:
 >>> let pairValidator = (,) <$> verify (notEmpty "EmptyString") fst <*> verify (failureIf (<10) "LessThan10") snd
 
 You can then run the validator on your input, using 'runValidator':
+
 >>> runValidator pairValidator ("foo", 12)
 Success ("foo",12)
 >>> runValidator pairValidator ("", 12)
@@ -80,6 +81,7 @@ infix 5 -?>
 {- | Fix a validator's output to be the same as its input.
 
 @fixV . fixV = 'id' . fixV@
+
 @'fmap' ('const' x) .  fixV = 'fmap' ('const' x)@
 
 __Note__: The primitive and derivative combinators already fix the validator output to be the
@@ -90,11 +92,13 @@ same as its input.
 This is useful for regaining the input value in the output position after multiple 'fmap's.
 
 Assume we have a validator that fails when input number is even-
+
 >>> let evenValidator = failureIf even "Even"
 
 This validator, when run, will yield its input value, wrapped in 'Success', if input is not even. 'fixV' would be redundant on this.
 
 However, if the output was 'fmap'ed to be something else-
+
 >>> let evenValidator' = fmap (:[]) evenValidator
 
 Now the output type is `[Int]`. The value of the output is no longer the same as the input. If we needed to get the

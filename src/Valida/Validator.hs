@@ -18,10 +18,12 @@ import Valida.Validation (Validation (..))
 
 The type can be understood as-
 
-    Validator e inp a
-              ^   ^ ^------ The output type on successful validation
-              |   |
-      Error type  |-- The input on which validation is run
+@
+Validator e inp a
+          ^   ^ ^------ The output type on successful validation
+          |   |
+  Error type  |-- The input on which validation is run
+@
 
 Validators are run using the __runValidator__ function.
 The result is of type __Validation e a__, corresponding to the type params of the same name on 'Validator'.

@@ -233,7 +233,7 @@ Given a validator that makes sure an int input is even, and returns said int inp
 
 Contravariant input, mixed with covariant output - is the bread and butter of Valida! It allows for elegant encoding of well composable validators using only 2 simple concepts.
 
-There's one more core idea that `Valida` uses though - `fixV`. `fixV` "fixes" a validator's output, to be the same as its input. `fmap` lets you *map* over the output, `lmap` lets you *contramap* over the input, `fixV` allows `fmap` to now *map* over the input value, on the output position. `fixV` also allows you to regain the input value in the output position if a validator has been `fmap`ed on.
+There's one more core idea that `Valida` uses though - [`fixV`](https://hackage.haskell.org/package/valida/docs/Valida.html#v:fixV). `fixV` "fixes" a validator's output, to be the same as its input. `fmap` lets you *map* over the output, `lmap` lets you *contramap* over the input, `fixV` allows `fmap` to now *map* over the input value, on the output position. `fixV` also allows you to regain the input value in the output position if a validator has been `fmap`ed on.
 
 # Comparison and Motivation
 The concept of the `Validation` data type used in this package isn't new. It's also used in the following packages-

@@ -1,0 +1,94 @@
+name: Head GHC/Stackage Nightly build tests (OPTIONAL)
+
+# Trigger the workflow only upon manual intervention.
+on: workflow_dispatch
+
+jobs:
+  cabal:
+    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    os: ubuntu-latest
+    ghc: head
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Remove examples subdirectory
+      run: rm -r ./examples
+
+    - id: setup-haskell-cabal
+      name: Setup Haskell
+      uses: haskell/actions/setup@v1
+      with:
+        ghc-version: ${{ matrix.ghc }}
+
+    - name: Configure
+      run: |
+        cabal configure --enable-tests --enable-benchmarks --test-show-details=direct
+
+    - name: Freeze
+      run: |
+        cabal freeze
+
+    - name: Cache ~/.cabal/store
+      uses: actions/cache@v2.1.3
+      with:
+        path: ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+        key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+
+    - name: Install dependencies
+      run: |
+        cabal build all --only-dependencies
+
+    - name: Build
+      run: |
+        cabal build all
+
+    - name: Test
+      run: |
+        cabal test all
+
+  stack:
+    name: ${{ matrix.os }} / stack ${{ matrix.resolver }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        resolver:
+          - nightly
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Remove examples subdirectory
+      run: rm -r ./examples
+
+    - name: Install Haskell Stack
+      uses: haskell/actions/setup@v1
+      with:
+        enable-stack: true
+        stack-version: latest
+
+    - name: Setup Haskell Stack
+      run: |
+        stack setup --resolver ${{ matrix.resolver }}
+
+    - name: Cache ~/.stack
+      uses: actions/cache@v2
+      with:
+        path: ~/.stack
+        key: ${{ runner.os }}-${{ matrix.resolver }}-stack
+
+    - name: Install dependencies
+      run: |
+        stack build --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
+
+    - name: Build
+      run: |
+        stack build --test --bench --haddock --no-run-tests --no-run-benchmarks --no-haddock-deps
+
+    - name: Test
+      run: |
+        stack test

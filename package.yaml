@@ -17,8 +17,8 @@ description:
     This package provides an applicative validator with support for contravariance. This makes building validators for product types idiomatic and simple. Many common utilities for building validators are also included.
 
 dependencies:
-- base >= 4.13 && < 5
-- profunctors
+- base >= 4.12 && < 5
+- profunctors >= 5
 
 ghc-options:
 - -Wall
@@ -51,5 +51,5 @@ tests:
     - tasty-hunit
     - tasty-quickcheck
     - tasty-smallcheck
-    - smallcheck
+    - smallcheck >= 1.2
     - valida

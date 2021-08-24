@@ -39,8 +39,8 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-uni-patterns -Wmissed-specialisations -Wmissing-export-lists -Wpartial-fields -Wredundant-constraints -O2
   build-depends:
-      base >=4.13 && <5
-    , profunctors
+      base >=4.12 && <5
+    , profunctors >=5
   default-language: Haskell2010
 
 test-suite valida-test
@@ -54,9 +54,9 @@ test-suite valida-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-uni-patterns -Wmissed-specialisations -Wmissing-export-lists -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.13 && <5
-    , profunctors
-    , smallcheck
+      base >=4.12 && <5
+    , profunctors >=5
+    , smallcheck >=1.2
     , tasty
     , tasty-hunit
     , tasty-quickcheck

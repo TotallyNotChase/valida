@@ -1,0 +1,7 @@
+resolver: lts-14.27
+
+packages:
+- .
+
+extra-deps:
+- smallcheck-1.2.1@sha256:1ef2b61327ddac96f46766dabd50f8a8bbdfccfae532248757849bfa01eac4d4,1512

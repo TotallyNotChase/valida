@@ -50,11 +50,11 @@ Validator f <> Validator g = Validator                                 {- (iii) 
 ```hs
 => x <> mempty
 = Validator v <> mempty
-= Validator v <> Validator (\x -> Success mempty) {- from (ii) -}
-= Validator                                       {- from (iii) -}
+= Validator v <> Validator (\x -> Success ()) {- from (ii) -}
+= Validator                                   {- from (iii) -}
     (\x' -> case v x' of
       Failure e  -> Failure e
-      Success () -> ((\x -> Success mempty) x'
+      Success () -> ((\x -> Success ()) x'
     )
 = Validator
     (\x' -> case v x' of
@@ -79,8 +79,8 @@ Validator f <> Validator g = Validator                                 {- (iii) 
 ```hs
 => mempty <> x
 = mempty <> Validator v
-= Validator (\x -> Success ()) <> Validator v     {- from (ii) -}
-= Validator                                       {- from (iii) -}
+= Validator (\x -> Success ()) <> Validator v {- from (ii) -}
+= Validator                                   {- from (iii) -}
     (\x' -> case ((\x -> Success ()) x') of
       Failure e  -> Failure e
       Success () -> v x'

@@ -4,6 +4,7 @@ module Main
 
 import Data.Either        (isRight)
 import Data.Foldable      (Foldable (fold))
+import Data.Functor       (void)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe         (isNothing)
 import Data.Monoid        (Sum)
@@ -13,14 +14,13 @@ import           Test.Tasty.HUnit      (testCase, (@?=))
 import qualified Test.Tasty.QuickCheck as QC
 import qualified Test.Tasty.SmallCheck as SC
 
-import Valida (Validation (..), Validator (runValidator), failureIf, failureIf', failureUnless, label,
-               failureUnless', failures, failV, fromEither, negateV, negateV', partitionValidations,
-               satisfyAll, satisfyAny, successes, toEither, fixV, validation, validationConst, (-?>), (</>),
-               (<?>))
+import Valida (Validation (..), Validator (runValidator), failV, failureIf, failureIf', failureUnless, failureUnless',
+               failures, fixV, fromEither, label, negateV, negateV', partitionValidations, satisfyAll, satisfyAny,
+               successes, toEither, validation, validationConst, (-?>), (</>), (<?>))
+
 
 import Gen   (NonEmptyLQ, ValidationQ (..))
 import Utils (neSingleton)
-import Data.Functor
 
 -- | Helper to build a validator with the raw given error.
 validatorFrom :: (a -> Bool) -> e -> Validator e a a

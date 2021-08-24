@@ -77,9 +77,9 @@ module Valida.Combinators
 import Data.Ix            (Ix (inRange))
 import Data.List.NonEmpty (NonEmpty)
 
-import Valida.Utils          (neSingleton)
-import Valida.Validation     (Validation (..), validationConst)
-import Valida.Validator      (Validator (Validator))
+import Valida.Utils      (neSingleton)
+import Valida.Validation (Validation (..), validationConst)
+import Valida.Validator  (Validator (Validator))
 
 ---------------------------------------------------------------------
 -- Primitive 'NonEmpty' combinators

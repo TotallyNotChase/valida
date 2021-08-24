@@ -7,11 +7,17 @@ module Valida.ValidationUtils
       -- * Utilities for working with 'Validation'
     , validation
     , validationConst
+      --
     , fromSuccess
+      --
     , fromFailure
+      --
     , isSuccess
+      --
     , isFailure
+      --
     , successes
+      --
     , failures
     , partitionValidations
     ) where

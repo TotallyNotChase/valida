@@ -417,7 +417,8 @@ mustContain' x = failureUnless' $ elem x
 
 {- | Build a validator that succeeds if given validator fails and vice versa.
 
-__Note__: This will set the output of the 'Validator' to be the same as its input.
+__Note__: This will set the output of the 'Validator' to be the same as its input,
+thereby ignoring the original output.
 
 ==== __Examples__
 
@@ -565,8 +566,6 @@ satisfyAll = foldr1 andAlso
 {- | Build a validator that runs given validator only if input is 'Just'.
 
 Yields 'Success' when input is 'Nothing'.
-
-__Note__: This sets the output of the new validator to /unit/.
 
 ==== __Examples__
 

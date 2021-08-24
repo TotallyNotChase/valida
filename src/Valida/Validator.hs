@@ -113,7 +113,7 @@ instance Monoid (Validator e inp ()) where
 {- |
 
 [@lmap@] 'lmap' runs given function on 'Validator' input before applying it to the validator function.
-This is similar to the 'Data.Contravariant.Predicate' type.
+This is similar to the 'Data.Functor.Contravariant.Predicate' type.
 
 [@rmap@] 'rmap' is the same as 'fmap'.
 

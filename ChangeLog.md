@@ -8,7 +8,7 @@
   The new semigroup instance now works similar to the `ValidationRule` semigroup instance.
 * Add `Monoid` instance for `Validator`.
 * Remove `ValidationRule`.
-* Removed `Selector` type alias.
+* Remove `Selector` type alias.
 * Rewrite all previous `ValidationRule` combinators to work with `Validator`s instead.
 * Rename `negateRule` -> `negateV`.
 * Rename `falseRule` -> `failV`.

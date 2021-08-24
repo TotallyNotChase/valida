@@ -47,7 +47,7 @@ inpFormValidator = ValidInput
     -- Email, if provided, should contain '@', and '.', and be atleast 5 characters long
     <*> inpEmail -?> optionally (minLengthOf 5 InvalidEmailLength
         <> mustContain '@' NoAtCharInMail
-        <> mustContain '.' NoPeriodInMail))
+        <> mustContain '.' NoPeriodInMail)
 
 goodInput :: InputForm
 goodInput = InpForm "John Doe" 42 Nothing
@@ -57,9 +57,9 @@ badInput = InpForm "John Doe" 17 (Just "@")
 
 main :: IO ()
 main = do
-    print (runForm inpFormValidator goodInput)
+    print (runValidator inpFormValidator goodInput)
     -- Prints- Success (ValidInput {vInpName = "John Doe", vInpAge = 42, vInpEmail = Nothing})
-    print (runForm inpFormValidator badInput)
+    print (runValidator inpFormValidator badInput)
     -- Prints- Failure (InvalidAge :| [InvalidEmailLength])
 ```
 
@@ -81,7 +81,7 @@ Or, if you prefer using operators - you can use [`-?>`](https://hackage.haskell.
 ```hs
 pairValidator :: Validator (NonEmpty String) (Int, String) (Int, String)
 pairValidator = (,)
-    <$> fst -?> failureUnless (<10) "NotLessThan10"
+    <$> fst -?> failureIf (>=10) "NotLessThan10"
     <*> snd -?> notEmpty "EmptyString"
 ```
 
@@ -96,20 +96,6 @@ Failure ("EmptyString" :| [])
 ```
 
 This is the core concept for building the validators. You can use the primitive combinators (e.g [`failureIf`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:failureIf), [`failureUnless`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:failureUnless)) to build `Validator`s directly from predicate functions, or you can choose one of the many derivate combinators (e.g [`notEmpty`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:notEmpty)) to build `Validator`s. Check out the [`Valida.Combinators`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html) module documentation to view all the included combinators.
-
-## Validators for non product types
-Although the primary purpose of Valida is building convenient validators for product types. Sometimes, you'll find yourself not needing to select on any field, but validating the input directly. In that case, you may find yourself using this pattern-
-```hs
--- | Make sure int input is not even.
-intValidator :: Validator (NonEmpty String) Int Int
-intValidator = verify (failureIf even "Even") id
-```
-
-In these situations, instead of using `verify` with `id` as selector, you should use [`validate`](https://hackage.haskell.org/package/valida/docs/Valida.html#v:validate) instead, which is the same as `flip verify id`-
-```hs
-intValidator :: Validator (NonEmpty String) Int Int
-intValidator = validate (failureIf even "Even")
-```
 
 ## Combining multiple `Validator`s
 Often, you'll find yourself in situations where you expect the input to satisfy *multiple* `Validator`s (but don't need applicative composition), or situations where you expect the input to satisfy *at least one* of multiple `Validator`s. This is where [`andAlso`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:andAlso), and [`orElse`](https://hackage.haskell.org/package/valida/docs/Valida-Combinators.html#v:orElse) come into play.
@@ -217,7 +203,7 @@ validateForm form = InputForm
   <*> validateDate (inpDate form)
 ```
 
-There's a few things wrong with this. The functions `validateName`, `validateAge`, and `validateDate` are defined elsewhere - but all of their definitions are really similar. Yet, without handy combinators - they can't be defined in a terse way. However, the bigger problem, is how all of the validators need to be fed their specific input by selecting the field from the product type. It could look better if the validator functions could somehow just be linked to a specific field selector in an elegant way. Something like `name -?> validateName`, perhaps.
+There's a few things unideal with this. The functions `validateName`, `validateAge`, and `validateDate` are defined elsewhere - but all of their definitions are really similar. Yet, without handy combinators - they can't be defined in a terse way. However, the bigger problem, is how all of the validators need to be fed their specific input by selecting the field from the product type. It could look better if the validator functions could somehow just be linked to a specific field selector in an elegant way. Something like `inpName -?> validateName`, perhaps.
 
 This is the perfect usecase for contravariance. A validation function, is really just a [`Predicate`](https://hackage.haskell.org/package/base-4.14.1.0/docs/Data-Functor-Contravariant.html#t:Predicate), the idiomatic example of a contravariant functor. However, it *also* needs to be an applicative functor to allow for the elegant composition. In fact, the type of a validation function needs to parameterize on 3 types - `inp -> Validation e a`
 * The input type

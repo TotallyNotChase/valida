@@ -1,5 +1,5 @@
 # Valida
-Simple, elegant, applicative validation for product types - batteries included!
+Simple, elegant, profunctorial, applicative validation for product types - batteries included!
 
 Read the documentation on [hackage](https://hackage.haskell.org/package/valida).
 

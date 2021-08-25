@@ -85,8 +85,8 @@ __right-most__ success is returned.
 
 __Examples__
 
->>> let v1 = fixV (failureIf (==2) "IsTwo")
->>> let v2 = fixV (failureIf even "IsEven")
+>>> let v1 = failureIf (==2) "IsTwo"
+>>> let v2 = failureIf even "IsEven"
 >>> runValidator (v1 <> v2) 5
 Success 5
 >>> runValidator (v1 <> v2) 4
@@ -119,11 +119,11 @@ This is similar to the 'Data.Functor.Contravariant.Predicate' type.
 
 __Examples__
 
->>> runValidator (lmap fst (fixV $ failureIf (==2) "IsTwo")) (3, 2)
+>>> runValidator (lmap fst (failureIf (==2) "IsTwo")) (3, 2)
 Success 3
->>> runValidator (lmap snd (fixV $ failureIf (==2) "IsTwo")) (3, 2)
+>>> runValidator (lmap snd (failureIf (==2) "IsTwo")) (3, 2)
 Failure ("IsTwo" :| [])
->>> runValidator (rmap (+1) (fixV $ failureIf (==2) "IsTwo")) 3
+>>> runValidator (rmap (+1) (failureIf (==2) "IsTwo")) 3
 Failure ("IsTwo" :| [])
 -}
 instance Profunctor (Validator e) where

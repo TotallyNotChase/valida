@@ -21,12 +21,14 @@ data InputForm = InpForm
   { inpName  :: String
   , inpAge   :: Int
   , inpEmail :: Maybe String
+  , inpFreeCake :: Maybe Bool
   } deriving (Show)
 
 data ValidInput = ValidInput
   { vInpName  :: String
   , vInpAge   :: Int
   , vInpEmail :: Maybe String
+  , vFreeCake :: Bool
   } deriving (Show)
 
 data FormErr
@@ -35,6 +37,7 @@ data FormErr
   | NoAtCharInMail
   | NoPeriodInMail
   | InvalidEmailLength
+  | YouMustGetFreeCake
   deriving (Show)
 
 -- | Validator for each field in the input form - built using 'Validator' combinators.
@@ -48,19 +51,21 @@ inpFormValidator = ValidInput
     <*> inpEmail -?> optionally (minLengthOf 5 InvalidEmailLength
         <> mustContain '@' NoAtCharInMail
         <> mustContain '.' NoPeriodInMail)
+    <*> inpFreeCake -?> failureUnless id YouMustGetFreeCake `withDefault` True
 
 goodInput :: InputForm
-goodInput = InpForm "John Doe" 42 Nothing
+goodInput = InpForm "John Doe" 42 Nothing (Just True)
 
 badInput :: InputForm
-badInput = InpForm "John Doe" 17 (Just "@")
+badInput = InpForm "John Doe" 17 (Just "@") Nothing
 
 main :: IO ()
 main = do
     print (runValidator inpFormValidator goodInput)
-    -- Prints- Success (ValidInput {vInpName = "John Doe", vInpAge = 42, vInpEmail = Nothing})
+    -- Prints- Success (ValidInput {vInpName = "John Doe", vInpAge = 42, vInpEmail = Nothing, vFreeCake = true})
     print (runValidator inpFormValidator badInput)
     -- Prints- Failure (InvalidAge :| [InvalidEmailLength])
+
 ```
 
 You can also find more examples [here](./examples/Main.hs).

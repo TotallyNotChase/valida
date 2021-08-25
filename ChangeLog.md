@@ -1,5 +1,10 @@
 # Changelog for valida
 
+## 1.1.0 (Aug 25, 2021)
+* Add `withDefault` combinator.
+* Make `optionally` preserve output of given validator.
+* Remove redundant `fixV` usage from examples.
+
 ## 1.0.0 (Aug 24, 2021)
 * Add `profunctors` dependency.
 * Add `Profunctor` instance for `Validator`.

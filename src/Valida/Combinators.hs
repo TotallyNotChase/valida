@@ -584,16 +584,16 @@ optionally (Validator v) = Validator $ maybe (Success Nothing) (fmap Just . v)
 
 Yields 'Success' when input is 'Nothing', and wrapped around the default value.
 
-@vald \`withDefault\` deflt = 'Data.Maybe.fromMaybe' deflt <$> 'optionally' vald@
+@vald \`withDefault\` deflt = 'Data.Maybe.fromMaybe' deflt '<$>' 'optionally' vald@
 
 ==== __Examples__
 
 >>> runValidator (failureIf even "Even" `withDefault` 0) (Just 5)
-Success (Just 5)
+Success 5
 >>> runValidator (failureIf even "Even" `withDefault` 0) (Just 6)
 Failure ("Even" :| [])
 >>> runValidator (failureIf even "Even" `withDefault` 0) Nothing
-Success Nothing
+Success 0
 -}
 withDefault :: Validator e inp a -> a -> Validator e (Maybe inp) a
 withDefault (Validator v) deflt = Validator $ maybe (Success deflt) v

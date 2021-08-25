@@ -1,0 +1,4 @@
+resolver: 18.7
+
+packages:
+- .

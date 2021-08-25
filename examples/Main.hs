@@ -9,7 +9,7 @@ import Data.Char           (isDigit, isSpace)
 import Data.Ix             (Ix (inRange))
 
 import Valida (Validation, Validator (..), failureUnless', label, lengthWithin, minLengthOf, mustContain, optionally,
-               valueWithin, fixV, (-?>), (</>))
+               valueWithin, (-?>), (</>))
 
 data InputForm = InpForm
   { inpName  :: String

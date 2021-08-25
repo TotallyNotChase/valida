@@ -122,11 +122,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        stack build --verbose --test --bench --no-run-tests --no-run-benchmarks --only-dependencies --stack-yaml ${{ matrix.conffile }}
+        stack build --test --bench --no-run-tests --no-run-benchmarks --only-dependencies --stack-yaml ${{ matrix.conffile }}
 
     - name: Build
       run: |
-        stack build --verbose --test --bench --haddock --no-run-tests --no-run-benchmarks --no-haddock-deps --stack-yaml ${{ matrix.conffile }}
+        stack build --test --bench --haddock --no-run-tests --no-run-benchmarks --no-haddock-deps --stack-yaml ${{ matrix.conffile }}
 
     - name: Test
       run: |
